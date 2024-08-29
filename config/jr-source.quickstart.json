@@ -2,7 +2,7 @@
     "name" : "jr-quickstart",
     "config": {
         "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
-        "command" : "jr run net_device",
+        "jr-command" : "jr run net_device",
         "topic": "net_device",
         "poll.ms" : 5000,
         "tasks.max": 1

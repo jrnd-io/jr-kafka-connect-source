@@ -24,8 +24,8 @@ public class JRSourceConnector extends SourceConnector {
     private Long pollMs;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
-            .define(JR_COMMAND_CONFIG, ConfigDef.Type.LIST, null, ConfigDef.Importance.HIGH, "JR command to execute")
-            .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "The topic to publish data to")
+            .define(JR_COMMAND_CONFIG, ConfigDef.Type.STRING, "jr run net_device", ConfigDef.Importance.HIGH, "JR command to execute")
+            .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to")
             .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Poll interval");
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
@@ -33,11 +33,7 @@ public class JRSourceConnector extends SourceConnector {
     @Override
     public void start(Map<String, String> map) {
         AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, map);
-        List<String> commands = parsedConfig.getList(JR_COMMAND_CONFIG);
-        if (commands == null || commands.size() != 1) {
-            throw new ConfigException("'jr-command' configuration requires definition of a single command");
-        }
-        command = commands.get(0);
+        command = parsedConfig.getString(JR_COMMAND_CONFIG);
 
         List<String> topics = parsedConfig.getList(TOPIC_CONFIG);
         if (topics == null || topics.size() != 1) {
