@@ -4,13 +4,13 @@ JR Source Connector for Apache Kafka Connect
 
 ## Quickstart
 
-Requirements on host machine:
+To run the demo, you will need on your host machine:
 
  - Docker engine.
  - Java JDK v 17.x or higher.
- - Apche Maven v 3.x
+ - Apache Maven v 3.x
 
-Run JR Source Connector Demo with command:
+Run JR Source Connector demo with command:
 
 ```
 bootstrap.sh
@@ -49,6 +49,6 @@ tear-down.sh
 
 JR Source Connector can be confgured with:
 
- - jr-command: A JR command to run. Accepted commands are: _jr run <template_name>_
- - topic: target topic
- - poll.ms: interval in milliseconds to generate a new message.
+ - _jr-command_: A JR command to run. Accepted commands are: _jr run <template_name>_
+ - _topic_: target topic
+ - _poll.ms_: interval in milliseconds to generate a new message.
