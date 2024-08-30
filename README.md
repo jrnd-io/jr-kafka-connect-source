@@ -2,14 +2,14 @@
 
 JR Source Connector for Apache Kafka Connect.
 
-JR executable should be installed on Kafka Connect Worker nodes to run the connector. (see Quickstart for a example).
+JR executable should be installed on Kafka Connect Worker nodes to run the connector. (see Quickstart for an example).
 
 Instructions on how to install JR on a target host are available at: https://jrnd.io
 
 ## Quickstart
 
 > [!NOTE]  
-> At the moment Quickstart runs only on Linux x86-64
+> At the moment Quickstart runs only on x86-64 architectures.
 
 In order to run JR Source Connector Quickstart, you will need on your host machine:
 
