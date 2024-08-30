@@ -2,9 +2,9 @@
     "name" : "jr-quickstart",
     "config": {
         "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
-        "jr-command" : "jr run net_device",
+        "template" : "net_device",
         "topic": "net_device",
-        "poll.ms" : 5000,
+        "frequency" : 5000,
         "tasks.max": 1
     }
 }
