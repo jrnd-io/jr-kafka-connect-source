@@ -1,22 +1,24 @@
 # jr-kafka-connect-source
 
-JR Source Connector for Apache Kafka Connect
+JR Source Connector for Apache Kafka Connect.
 
 ## Quickstart
 
-To run the demo, you will need on your host machine:
+In order to run JR Source Connector Quickstart, you will need on your host machine:
 
  - Docker engine.
  - Java JDK v 17.x or higher.
  - Apache Maven v 3.x
 
-Run JR Source Connector demo with command:
+Quickstart is placed in _quickstart_ folder.
+
+Run JR Source Connector Quickstart with command:
 
 ```
 bootstrap.sh
 ```
 
-This will instatiate a Kafka cluster using docker containers with:
+This will instantiate a Kafka cluster using docker containers with:
 
  - 1 broker listening on port 9092
  - 1 schema registry listening on port 8081
@@ -33,13 +35,13 @@ A JR connector job for template _net_device_ will be instantiated and produce a 
         "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
         "template" : "net_device",
         "topic": "net_device",
-        "poll.ms" : 5000,
+        "frequency" : 5000,
         "tasks.max": 1
     }
 }
 ```
 
-To shutdown the demo, run command:
+To shut down JR Source Connector Quickstart, run command:
 
 ```
 tear-down.sh
@@ -47,8 +49,8 @@ tear-down.sh
 
 ## Configuration
 
-JR Source Connector can be confgured with:
+JR Source Connector can be configured with:
 
  - _template_: A valid JR existing template name. For a list of template see: https://jrnd.io/docs/#listing-existing-templates
  - _topic_: target topic
- - _poll.ms_: interval in milliseconds to generate a new message.
+ - _frequency_: repeat the creation every X milliseconds.

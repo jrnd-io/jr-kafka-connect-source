@@ -17,7 +17,7 @@ public class JRSourceConnector extends SourceConnector {
 
     public static final String JR_EXISTING_TEMPLATE = "template";
     public static final String TOPIC_CONFIG = "topic";
-    public static final String POLL_CONFIG = "poll.ms";
+    public static final String POLL_CONFIG = "frequency";
 
     private String topic;
     private String command;
@@ -26,7 +26,7 @@ public class JRSourceConnector extends SourceConnector {
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, "net_device", ConfigDef.Importance.HIGH, "A valid JR existing template name")
             .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to")
-            .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Poll interval");
+            .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds");
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
@@ -43,7 +43,7 @@ public class JRSourceConnector extends SourceConnector {
 
         pollMs = parsedConfig.getLong(POLL_CONFIG);
 
-        LOG.info("Config: jr-command: {} - topic: {} - pollMs: {}", command, topic, pollMs);
+        LOG.info("Config: template: {} - topic: {} - frequency: {}", command, topic, pollMs);
     }
 
     @Override
