@@ -4,6 +4,9 @@ JR Source Connector for Apache Kafka Connect.
 
 ## Quickstart
 
+> [!NOTE]  
+> At the moment Quickstart runs only on Linux x86-64
+
 In order to run JR Source Connector Quickstart, you will need on your host machine:
 
  - Docker engine.
