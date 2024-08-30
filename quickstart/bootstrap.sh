@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if [[ $(uname -m) == 'arm64' ]]; then
-  echo "arm64 not yet supported for Quickstart"
-  exit 1
-fi
-
 sh tear-down.sh
 
 sh build-image.sh
