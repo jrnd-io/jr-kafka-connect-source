@@ -2,7 +2,7 @@
 
 JR Source Connector for Apache Kafka Connect.
 
-JR executable should be installed on Kafka Connect Worker nodes to run the connector. (see Quickstart for a example).
+JR executable should be installed on Kafka Connect Worker nodes to run the connector. (see Quickstart for an example).
 
 Instructions on how to install JR on a target host are available at: https://jrnd.io
 
@@ -16,7 +16,7 @@ In order to run JR Source Connector Quickstart, you will need on your host machi
 
 Quickstart is placed in _quickstart_ folder.
 
-Run JR Source Connector Quickstart with command:
+Run JR Source Connector Quickstart from inside  _quickstart_ folder with command:
 
 ```
 bootstrap.sh
@@ -55,6 +55,6 @@ tear-down.sh
 
 JR Source Connector can be configured with:
 
- - _template_: A valid JR existing template name. For a list of template see: https://jrnd.io/docs/#listing-existing-templates
+ - _template_: A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates
  - _topic_: target topic
- - _frequency_: repeat the creation every X milliseconds.
+ - _frequency_: Repeat the creation of a random message every X milliseconds.
