@@ -18,9 +18,9 @@ bootstrap.sh
 
 This will instatiate a Kafka cluster using docker containers with:
 
- - 1 broker listening on 9092
- - 1 schema registry listening on 8081
- - 1 kafka connect listening on 8083
+ - 1 broker listening on port 9092
+ - 1 schema registry listening on port 8081
+ - 1 kafka connect listening on port 8083
  - JR binary already installed on kafka connect container
  - JR source connector plugin installed on kafka connect container
 
@@ -31,7 +31,7 @@ A JR connector job for template _net_device_ will be instantiated and produce a 
     "name" : "jr-quickstart",
     "config": {
         "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
-        "jr-command" : "jr run net_device",
+        "template" : "net_device",
         "topic": "net_device",
         "poll.ms" : 5000,
         "tasks.max": 1
@@ -49,6 +49,6 @@ tear-down.sh
 
 JR Source Connector can be confgured with:
 
- - _jr-command_: A JR command to run. Accepted commands are: _jr run <template_name>_
+ - _template_: A valid JR existing template name. For a list of template see: https://jrnd.io/docs/#listing-existing-templates
  - _topic_: target topic
  - _poll.ms_: interval in milliseconds to generate a new message.

@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class JRSourceConnector extends SourceConnector {
 
-    public static final String JR_COMMAND_CONFIG = "jr-command";
+    public static final String JR_EXISTING_TEMPLATE = "template";
     public static final String TOPIC_CONFIG = "topic";
     public static final String POLL_CONFIG = "poll.ms";
 
@@ -24,7 +24,7 @@ public class JRSourceConnector extends SourceConnector {
     private Long pollMs;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
-            .define(JR_COMMAND_CONFIG, ConfigDef.Type.STRING, "jr run net_device", ConfigDef.Importance.HIGH, "JR command to execute")
+            .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, "net_device", ConfigDef.Importance.HIGH, "A valid JR existing template name")
             .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to")
             .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Poll interval");
 
@@ -33,7 +33,7 @@ public class JRSourceConnector extends SourceConnector {
     @Override
     public void start(Map<String, String> map) {
         AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, map);
-        command = parsedConfig.getString(JR_COMMAND_CONFIG);
+        command = parsedConfig.getString(JR_EXISTING_TEMPLATE);
 
         List<String> topics = parsedConfig.getList(TOPIC_CONFIG);
         if (topics == null || topics.size() != 1) {
@@ -55,7 +55,7 @@ public class JRSourceConnector extends SourceConnector {
     public List<Map<String, String>> taskConfigs(int i) {
         ArrayList<Map<String, String>> configs = new ArrayList<>();
         Map<String, String> config = new HashMap<>();
-        config.put(JR_COMMAND_CONFIG, command);
+        config.put(JR_EXISTING_TEMPLATE, command);
         config.put(TOPIC_CONFIG, topic);
         config.put(POLL_CONFIG, String.valueOf(pollMs));
         configs.add(config);

@@ -7,8 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
@@ -21,7 +19,7 @@ public class JRSourceTask extends SourceTask {
     private Long apiOffset = 0L;
     private String fromDate = "1970-01-01T00:00:00.0000000Z";
 
-    private static final String COMMAND = "jr-command";
+    private static final String COMMAND = "net_device";
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceTask.class);
 
@@ -32,7 +30,7 @@ public class JRSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
-        command = map.get(JRSourceConnector.JR_COMMAND_CONFIG);
+        command = map.get(JRSourceConnector.JR_EXISTING_TEMPLATE);
         topic = map.get(JRSourceConnector.TOPIC_CONFIG);
         pollMs = Long.valueOf(map.get(JRSourceConnector.POLL_CONFIG));
 
@@ -51,12 +49,12 @@ public class JRSourceTask extends SourceTask {
 
         if (System.currentTimeMillis() > (last_execution + pollMs)) {
 
-            LOG.info("Poll command: {}", command);
+            LOG.debug("Poll command: {}", command);
 
             last_execution = System.currentTimeMillis();
             String result = execCommand(command);
 
-            LOG.info("Result: {}", result);
+            LOG.debug("Result: {}", result);
 
             List<SourceRecord>  sourceRecords = new ArrayList<>();
             Map sourcePartition = Collections.singletonMap("filename", command);
@@ -75,15 +73,13 @@ public class JRSourceTask extends SourceTask {
     private String execCommand(String cmd) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("bash", "-c", cmd);
+        processBuilder.command("bash", "-c", "jr run " + cmd);
 
-        String result = null;
         StringBuilder output = null;
         try {
-            // Start the process
             Process process = processBuilder.start();
 
-            // Capture the output of the command
+            // Capture the output of the external command
             output = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
@@ -94,8 +90,7 @@ public class JRSourceTask extends SourceTask {
             // Wait for the process to complete and get the exit value
             int exitVal = process.waitFor();
             if (exitVal == 0) {
-                LOG.info("Success!");
-                LOG.info(String.valueOf(output));
+                LOG.debug("Exit val: Success!");
             } else {
                 // Capture and print error stream if the command failed
                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -103,8 +98,7 @@ public class JRSourceTask extends SourceTask {
                 while ((line = errorReader.readLine()) != null) {
                     errorOutput.append(line).append("\n");
                 }
-                LOG.info("Error!");
-                LOG.info(String.valueOf(errorOutput));
+                LOG.debug("Exit val: Error!");
             }
 
         } catch (Exception e) {
