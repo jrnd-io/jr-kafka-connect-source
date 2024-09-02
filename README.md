@@ -29,7 +29,7 @@ This will instantiate a Kafka cluster using docker containers with:
  - JR binary already installed on kafka connect container
  - JR source connector plugin installed on kafka connect container
 
-A JR connector job for template _net_device_ will be instantiated and produce a new random message to _net_device_ topic every 5 seconds.
+A JR connector job for template _net_device_ will be instantiated and produce 5 new random messages to _net_device_ topic every 5 seconds.
 
 ```
 {
@@ -39,6 +39,7 @@ A JR connector job for template _net_device_ will be instantiated and produce a 
         "template" : "net_device",
         "topic": "net_device",
         "frequency" : 5000,
+        "objects": 5,
         "tasks.max": 1
     }
 }
@@ -57,3 +58,4 @@ JR Source Connector can be configured with:
  - _template_: A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates
  - _topic_: target topic
  - _frequency_: Repeat the creation of a random message every X milliseconds.
+ - _objects_: Number of objects to create at every run. Default is 1.
