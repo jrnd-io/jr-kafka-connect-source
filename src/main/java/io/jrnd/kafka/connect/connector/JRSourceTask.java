@@ -20,99 +20,100 @@
 
 package io.jrnd.kafka.connect.connector;
 
-import org.apache.kafka.connect.source.SourceRecord;
-import org.apache.kafka.connect.source.SourceTask;
-import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.common.config.AbstractConfig;
+import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigException;
+import org.apache.kafka.connect.connector.Task;
+import org.apache.kafka.connect.source.SourceConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class JRSourceTask extends SourceTask {
+public class JRSourceConnector extends SourceConnector {
 
-    private String template;
+    public static final String JR_EXISTING_TEMPLATE = "template";
+    public static final String TOPIC_CONFIG = "topic";
+    public static final String POLL_CONFIG = "frequency";
+    public static final String OBJECTS_CONFIG = "objects";
+
+    private static final String DEFAULT_TEMPLATE = "net_device";
+
     private String topic;
+    private String template;
     private Long pollMs;
     private Integer objects;
-    private Long last_execution = 0L;
-    private Long apiOffset = 0L;
-    private String fromDate = "1970-01-01T00:00:00.0000000Z";
 
-    private static final String TEMPLATE = "template";
-    private static final String POSITION = "position";
+    private static final ConfigDef CONFIG_DEF = new ConfigDef()
+            .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, "net_device", ConfigDef.Importance.HIGH, "A valid JR existing template name.")
+            .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to.")
+            .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds.")
+            .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.");
 
-    private static final Logger LOG = LoggerFactory.getLogger(JRSourceTask.class);
-
-    @Override
-    public String version() {
-        return null;
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
     @Override
     public void start(Map<String, String> map) {
-        template = map.get(JRSourceConnector.JR_EXISTING_TEMPLATE);
-        topic = map.get(JRSourceConnector.TOPIC_CONFIG);
-        pollMs = Long.valueOf(map.get(JRSourceConnector.POLL_CONFIG));
-        objects = Integer.valueOf(map.get(JRSourceConnector.OBJECTS_CONFIG));
 
-        Map<String, Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(TEMPLATE, template));
-        if (offset != null) {
-            Long lastRecordedOffset = (Long) offset.get(POSITION);
-            if (lastRecordedOffset != null) {
-                LOG.info("Loaded offset: {}", apiOffset);
-                apiOffset = lastRecordedOffset;
-            }
+        //check list of available templates
+        List<String> templates = JRCommandExecutor.templates();
+        if(templates.isEmpty())
+            throw new ConfigException("JR template list is empty");
+
+        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, map);
+        template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
+        if(template == null || template.isEmpty())
+            template = DEFAULT_TEMPLATE;
+
+        if(!templates.contains(template))
+            throw new ConfigException("'template' must be a valid JR template");
+
+        List<String> topics = parsedConfig.getList(TOPIC_CONFIG);
+        if (topics == null || topics.size() != 1) {
+            throw new ConfigException("'topic' configuration requires definition of a single topic");
         }
+        topic = topics.get(0);
+
+        pollMs = parsedConfig.getLong(POLL_CONFIG);
+
+        objects = parsedConfig.getInt(OBJECTS_CONFIG);
+        if(objects == null || objects < 1)
+            objects = 1;
+
+        if (LOG.isInfoEnabled())
+            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {}", template, topic, pollMs, objects);
     }
 
     @Override
-    public List<SourceRecord> poll() {
+    public Class<? extends Task> taskClass() {
+        return JRSourceTask.class;
+    }
 
-        if (System.currentTimeMillis() > (last_execution + pollMs)) {
-
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("init fromDate is {}.", fromDate);
-                LOG.debug("Generate records for template: {}", template);
-            }
-
-            last_execution = System.currentTimeMillis();
-            List<String> result = JRCommandExecutor.runTemplate(template, objects);
-
-            if (LOG.isDebugEnabled())
-                LOG.debug("Result from JR command: {}", result);
-
-            List<SourceRecord> sourceRecords = new ArrayList<>();
-
-            for(String record: result) {
-
-                String newFromDate = LocalDateTime.now().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-                apiOffset = calculateApiOffset(apiOffset, newFromDate, fromDate);
-                fromDate = newFromDate;
-
-                Map<String, Object> sourcePartition = Collections.singletonMap(TEMPLATE, template);
-                Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
-                sourceRecords.add(new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, record));
-
-                if (LOG.isDebugEnabled())
-                    LOG.debug("new fromDate is {}.", fromDate);
-            }
-
-            return sourceRecords;
-        }
-        return Collections.emptyList();
+    @Override
+    public List<Map<String, String>> taskConfigs(int i) {
+        ArrayList<Map<String, String>> configs = new ArrayList<>();
+        Map<String, String> config = new HashMap<>();
+        config.put(JR_EXISTING_TEMPLATE, template);
+        config.put(TOPIC_CONFIG, topic);
+        config.put(POLL_CONFIG, String.valueOf(pollMs));
+        config.put(OBJECTS_CONFIG, String.valueOf(objects));
+        configs.add(config);
+        return configs;
     }
 
     @Override
     public void stop() {}
 
-    private long calculateApiOffset(long currentLoopOffset, String newFromDate, String oldFromDate) {
-        if (newFromDate.equals(oldFromDate)) {
-            return ++currentLoopOffset;
-        }
-        return 1L;
+    @Override
+    public ConfigDef config() {
+        return CONFIG_DEF;
     }
 
+    @Override
+    public String version() {
+        return null;
+    }
 }
