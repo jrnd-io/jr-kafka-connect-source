@@ -5,6 +5,7 @@
         "template" : "net_device",
         "topic": "net_device",
         "frequency" : 5000,
+        "objects": 5,
         "tasks.max": 1
     }
 }
