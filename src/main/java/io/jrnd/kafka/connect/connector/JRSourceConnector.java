@@ -40,7 +40,7 @@ public class JRSourceConnector extends SourceConnector {
     public static final String POLL_CONFIG = "frequency";
 
     private String topic;
-    private String command;
+    private String template;
     private Long pollMs;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
@@ -52,8 +52,17 @@ public class JRSourceConnector extends SourceConnector {
 
     @Override
     public void start(Map<String, String> map) {
+
+        //check list of available templates
+        List<String> templates = JRCommandExecutor.templates();
+        if(templates.isEmpty())
+            throw new ConfigException("JR template list is empty");
+
         AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, map);
-        command = parsedConfig.getString(JR_EXISTING_TEMPLATE);
+        template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
+
+        if(!templates.contains(template))
+            throw new ConfigException("'template' must be a valid JR template");
 
         List<String> topics = parsedConfig.getList(TOPIC_CONFIG);
         if (topics == null || topics.size() != 1) {
@@ -63,7 +72,7 @@ public class JRSourceConnector extends SourceConnector {
 
         pollMs = parsedConfig.getLong(POLL_CONFIG);
 
-        LOG.info("Config: template: {} - topic: {} - frequency: {}", command, topic, pollMs);
+        LOG.info("Config: template: {} - topic: {} - frequency: {}", template, topic, pollMs);
     }
 
     @Override
@@ -75,7 +84,7 @@ public class JRSourceConnector extends SourceConnector {
     public List<Map<String, String>> taskConfigs(int i) {
         ArrayList<Map<String, String>> configs = new ArrayList<>();
         Map<String, String> config = new HashMap<>();
-        config.put(JR_EXISTING_TEMPLATE, command);
+        config.put(JR_EXISTING_TEMPLATE, template);
         config.put(TOPIC_CONFIG, topic);
         config.put(POLL_CONFIG, String.valueOf(pollMs));
         configs.add(config);
@@ -83,9 +92,7 @@ public class JRSourceConnector extends SourceConnector {
     }
 
     @Override
-    public void stop() {
-
-    }
+    public void stop() {}
 
     @Override
     public ConfigDef config() {
