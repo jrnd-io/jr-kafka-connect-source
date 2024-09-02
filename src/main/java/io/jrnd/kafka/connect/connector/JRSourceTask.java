@@ -111,11 +111,43 @@ public class JRSourceTask extends SourceTask {
     @Override
     public void stop() {}
 
-    private long calculateApiOffset(long currentLoopOffset, String newFromDate, String oldFromDate) {
+    public long calculateApiOffset(long currentLoopOffset, String newFromDate, String oldFromDate) {
         if (newFromDate.equals(oldFromDate)) {
             return ++currentLoopOffset;
         }
         return 1L;
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public Long getPollMs() {
+        return pollMs;
+    }
+
+    public Integer getObjects() {
+        return objects;
+    }
+
+    public Long getLast_execution() {
+        return last_execution;
+    }
+
+    public void setLast_execution(Long last_execution) {
+        this.last_execution = last_execution;
+    }
+
+    public Long getApiOffset() {
+        return apiOffset;
+    }
+
+    public String getFromDate() {
+        return fromDate;
     }
 
 }
