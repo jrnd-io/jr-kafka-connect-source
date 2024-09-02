@@ -1,25 +1,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <groupId>io.jrnd</groupId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <artifactId>jr-kafka-connect-source</artifactId>
     <packaging>jar</packaging>
 
     <properties>
-    	<maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.shade.plugin>3.2.4</maven.shade.plugin>
         <maven.assembly.plugin>3.3.0</maven.assembly.plugin>
         <kafka.version>3.8.0</kafka.version>
         <avro.version>1.11.3</avro.version>
         <slf4j.version>1.7.15</slf4j.version>
-        <junit.version>4.13.1</junit.version>
+        <junit.version>5.8.2</junit.version>
+        <mockito.version>4.4.0</mockito.version>
         <curator.version>5.0.0</curator.version>
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka_2.12</artifactId>
@@ -48,9 +50,23 @@
         </dependency>
 
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
 
