@@ -2,9 +2,8 @@
 
 JR Source Connector for Apache Kafka Connect.
 
-JR executable should be installed on Kafka Connect Worker nodes to run the connector. (see Quickstart for an example).
-
-Instructions on how to install JR on a target host are available at: https://jrnd.io
+> [!NOTE]  
+> JR executable should be installed on Kafka Connect Worker nodes to run the connector _(see Quickstart for an example)_. Instructions on how to install JR on a target host are available at: https://jrnd.io
 
 ## Quickstart
 
