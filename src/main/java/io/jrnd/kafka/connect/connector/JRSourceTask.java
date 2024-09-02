@@ -62,7 +62,8 @@ public class JRSourceTask extends SourceTask {
         if (offset != null) {
             Long lastRecordedOffset = (Long) offset.get(POSITION);
             if (lastRecordedOffset != null) {
-                LOG.info("Loaded offset: {}", apiOffset);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Loaded offset: {}", apiOffset);
                 apiOffset = lastRecordedOffset;
             }
         }
