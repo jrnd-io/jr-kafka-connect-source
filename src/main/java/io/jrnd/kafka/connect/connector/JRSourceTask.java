@@ -33,6 +33,8 @@ import java.util.*;
 
 public class JRSourceTask extends SourceTask {
 
+    private JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance();
+
     private String template;
     private String topic;
     private Long pollMs;
@@ -80,7 +82,7 @@ public class JRSourceTask extends SourceTask {
             }
 
             last_execution = System.currentTimeMillis();
-            List<String> result = JRCommandExecutor.runTemplate(template, objects);
+            List<String> result = jrCommandExecutor.runTemplate(template, objects);
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Result from JR command: {}", result);
