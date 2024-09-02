@@ -59,3 +59,9 @@ JR Source Connector can be configured with:
  - _topic_: target topic
  - _frequency_: Repeat the creation of a random message every X milliseconds.
  - _objects_: Number of objects to create at every run. Default is 1.
+
+## Install the connector
+
+ - Download and extract the ZIP file from [releases](https://github.com/jrnd-io/jr-kafka-connect-source/releases)
+ - Extract the ZIP file contents and copy the contents to the desired location on every Kafka Connect worker nodes, for example _/home/connect/jr_
+ - Add the folder to the plugin path in Kafka Connect properties file. For example, _plugin.path=/usr/local/share/kafka/plugins,/home/connect/jr_
