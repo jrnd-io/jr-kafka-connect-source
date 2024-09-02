@@ -26,17 +26,23 @@ import org.apache.kafka.connect.data.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class JRSourceTask extends SourceTask {
 
-    private String command;
+    private String template;
     private String topic;
     private Long pollMs;
+    private Integer objects;
     private Long last_execution = 0L;
     private Long apiOffset = 0L;
+    private String fromDate = "1970-01-01T00:00:00.0000000Z";
 
-    private static final String COMMAND = "net_device";
+    private static final String TEMPLATE = "template";
+    private static final String POSITION = "position";
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceTask.class);
 
@@ -47,15 +53,16 @@ public class JRSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
-        command = map.get(JRSourceConnector.JR_EXISTING_TEMPLATE);
+        template = map.get(JRSourceConnector.JR_EXISTING_TEMPLATE);
         topic = map.get(JRSourceConnector.TOPIC_CONFIG);
         pollMs = Long.valueOf(map.get(JRSourceConnector.POLL_CONFIG));
+        objects = Integer.valueOf(map.get(JRSourceConnector.OBJECTS_CONFIG));
 
-        Map<String, Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(COMMAND, command));
+        Map<String, Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(TEMPLATE, template));
         if (offset != null) {
-            Long lastRecordedOffset = (Long) offset.get("position");
+            Long lastRecordedOffset = (Long) offset.get(POSITION);
             if (lastRecordedOffset != null) {
-                LOG.debug("Loaded offset: {}", apiOffset);
+                LOG.info("Loaded offset: {}", apiOffset);
                 apiOffset = lastRecordedOffset;
             }
         }
@@ -66,17 +73,33 @@ public class JRSourceTask extends SourceTask {
 
         if (System.currentTimeMillis() > (last_execution + pollMs)) {
 
-            LOG.debug("Poll command: {}", command);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("init fromDate is {}.", fromDate);
+                LOG.debug("Generate records for template: {}", template);
+            }
 
             last_execution = System.currentTimeMillis();
-            String result = JRCommandExecutor.runTemplate(command);
+            List<String> result = JRCommandExecutor.runTemplate(template, objects);
 
-            LOG.debug("Result: {}", result);
+            if (LOG.isDebugEnabled())
+                LOG.debug("Result from JR command: {}", result);
 
-            List<SourceRecord>  sourceRecords = new ArrayList<>();
-            Map<String, String> sourcePartition = Collections.singletonMap("filename", command);
-            Map<String, Long> sourceOffset = Collections.singletonMap("position", ++apiOffset);
-            sourceRecords.add(new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, result));
+            List<SourceRecord> sourceRecords = new ArrayList<>();
+
+            for(String record: result) {
+
+                String newFromDate = LocalDateTime.now().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                apiOffset = calculateApiOffset(apiOffset, newFromDate, fromDate);
+                fromDate = newFromDate;
+
+                Map<String, Object> sourcePartition = Collections.singletonMap(TEMPLATE, template);
+                Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
+                sourceRecords.add(new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, record));
+
+                if (LOG.isDebugEnabled())
+                    LOG.debug("new fromDate is {}.", fromDate);
+            }
+
             return sourceRecords;
         }
         return Collections.emptyList();
@@ -84,5 +107,12 @@ public class JRSourceTask extends SourceTask {
 
     @Override
     public void stop() {}
+
+    private long calculateApiOffset(long currentLoopOffset, String newFromDate, String oldFromDate) {
+        if (newFromDate.equals(oldFromDate)) {
+            return ++currentLoopOffset;
+        }
+        return 1L;
+    }
 
 }
