@@ -38,15 +38,20 @@ public class JRSourceConnector extends SourceConnector {
     public static final String JR_EXISTING_TEMPLATE = "template";
     public static final String TOPIC_CONFIG = "topic";
     public static final String POLL_CONFIG = "frequency";
+    public static final String OBJECTS_CONFIG = "objects";
+
+    private static final String DEFAULT_TEMPLATE = "net_device";
 
     private String topic;
     private String template;
     private Long pollMs;
+    private Integer objects;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
-            .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, "net_device", ConfigDef.Importance.HIGH, "A valid JR existing template name")
-            .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to")
-            .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds");
+            .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, "net_device", ConfigDef.Importance.HIGH, "A valid JR existing template name.")
+            .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to.")
+            .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds.")
+            .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.");
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
@@ -60,6 +65,8 @@ public class JRSourceConnector extends SourceConnector {
 
         AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, map);
         template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
+        if(template == null || template.isEmpty())
+            template = DEFAULT_TEMPLATE;
 
         if(!templates.contains(template))
             throw new ConfigException("'template' must be a valid JR template");
@@ -72,7 +79,12 @@ public class JRSourceConnector extends SourceConnector {
 
         pollMs = parsedConfig.getLong(POLL_CONFIG);
 
-        LOG.info("Config: template: {} - topic: {} - frequency: {}", template, topic, pollMs);
+        objects = parsedConfig.getInt(OBJECTS_CONFIG);
+        if(objects == null || objects < 1)
+            objects = 1;
+
+        if (LOG.isInfoEnabled())
+            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {}", template, topic, pollMs, objects);
     }
 
     @Override
@@ -87,6 +99,7 @@ public class JRSourceConnector extends SourceConnector {
         config.put(JR_EXISTING_TEMPLATE, template);
         config.put(TOPIC_CONFIG, topic);
         config.put(POLL_CONFIG, String.valueOf(pollMs));
+        config.put(OBJECTS_CONFIG, String.valueOf(objects));
         configs.add(config);
         return configs;
     }
