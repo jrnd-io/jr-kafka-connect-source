@@ -35,6 +35,8 @@ import java.util.Map;
 
 public class JRSourceConnector extends SourceConnector {
 
+    private JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance();
+
     public static final String JR_EXISTING_TEMPLATE = "template";
     public static final String TOPIC_CONFIG = "topic";
     public static final String POLL_CONFIG = "frequency";
@@ -59,7 +61,7 @@ public class JRSourceConnector extends SourceConnector {
     public void start(Map<String, String> map) {
 
         //check list of available templates
-        List<String> templates = JRCommandExecutor.templates();
+        List<String> templates = jrCommandExecutor.templates();
         if(templates.isEmpty())
             throw new ConfigException("JR template list is empty");
 
@@ -67,6 +69,8 @@ public class JRSourceConnector extends SourceConnector {
         template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
         if(template == null || template.isEmpty())
             template = DEFAULT_TEMPLATE;
+
+        System.out.println(templates);
 
         if(!templates.contains(template))
             throw new ConfigException("'template' must be a valid JR template");
@@ -115,5 +119,25 @@ public class JRSourceConnector extends SourceConnector {
     @Override
     public String version() {
         return null;
+    }
+
+    public Integer getObjects() {
+        return objects;
+    }
+
+    public Long getPollMs() {
+        return pollMs;
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    public JRCommandExecutor getJrCommandExecutor() {
+        return jrCommandExecutor;
     }
 }
