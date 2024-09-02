@@ -57,10 +57,10 @@ public class JRCommandExecutor {
         return templates; 
     }
 
-    public static String runTemplate(String cmd) {
+    public static List<String> runTemplate(String template, int objects) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("bash", "-c", "jr run " + cmd);
+        processBuilder.command("bash", "-c", "jr run " + template + " -n " + objects);
 
         StringBuilder output = null;
         try {
@@ -80,10 +80,10 @@ public class JRCommandExecutor {
                 LOG.error("JR command failed:{}", e.getMessage());
         }
         assert output != null;
-        return output.toString();
+        return splitJsonObjects(output.toString().replaceAll("\\r?\\n", ""));
     }
 
-    public static void printError(Process process) throws Exception {
+    private static void printError(Process process) throws Exception {
         int exitVal = process.waitFor();
         if (exitVal != 0)  {
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -97,7 +97,32 @@ public class JRCommandExecutor {
         }
     }
 
-    public static boolean containsWhitespace(String str) {
+    private static boolean containsWhitespace(String str) {
         return str.matches(".*\\s.*");
+    }
+
+    private static List<String> splitJsonObjects(String jsonString) {
+        List<String> jsonObjects = new ArrayList<>();
+        int braceCount = 0;
+        StringBuilder currentJson = new StringBuilder();
+
+        for (char c : jsonString.toCharArray()) {
+            if (c == '{') {
+                if (braceCount == 0 && currentJson.length() > 0) {
+                    jsonObjects.add(currentJson.toString());
+                    currentJson.setLength(0);
+                }
+                braceCount++;
+            }
+            if (c == '}') {
+                braceCount--;
+            }
+            currentJson.append(c);
+            if (braceCount == 0 && currentJson.length() > 0) {
+                jsonObjects.add(currentJson.toString());
+                currentJson.setLength(0);
+            }
+        }
+        return jsonObjects;
     }
 }
