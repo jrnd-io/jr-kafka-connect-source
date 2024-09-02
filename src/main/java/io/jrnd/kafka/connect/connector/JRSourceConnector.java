@@ -70,8 +70,6 @@ public class JRSourceConnector extends SourceConnector {
         if(template == null || template.isEmpty())
             template = DEFAULT_TEMPLATE;
 
-        System.out.println(templates);
-
         if(!templates.contains(template))
             throw new ConfigException("'template' must be a valid JR template");
 
