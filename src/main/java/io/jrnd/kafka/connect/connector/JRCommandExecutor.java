@@ -27,9 +27,19 @@ import java.util.List;
 
 public class JRCommandExecutor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JRSourceTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JRCommandExecutor.class);
+
+    private JRCommandExecutor() {}
+
+    private static class JRCommandExecutorHelper {
+        private static final JRCommandExecutor INSTANCE = new JRCommandExecutor();
+    }
+
+    public static JRCommandExecutor getInstance() {
+        return JRCommandExecutorHelper.INSTANCE;
+    }
     
-    public static List<String> templates() {
+    public List<String> templates() {
         List<String> templates = new ArrayList<>();
         
         ProcessBuilder processBuilder = new ProcessBuilder();
@@ -57,7 +67,7 @@ public class JRCommandExecutor {
         return templates; 
     }
 
-    public static List<String> runTemplate(String template, int objects) {
+    public List<String> runTemplate(String template, int objects) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command("bash", "-c", "jr run " + template + " -n " + objects);
@@ -83,7 +93,7 @@ public class JRCommandExecutor {
         return splitJsonObjects(output.toString().replaceAll("\\r?\\n", ""));
     }
 
-    private static void printError(Process process) throws Exception {
+    private void printError(Process process) throws Exception {
         int exitVal = process.waitFor();
         if (exitVal != 0)  {
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
@@ -97,11 +107,11 @@ public class JRCommandExecutor {
         }
     }
 
-    private static boolean containsWhitespace(String str) {
+    private boolean containsWhitespace(String str) {
         return str.matches(".*\\s.*");
     }
 
-    private static List<String> splitJsonObjects(String jsonString) {
+    private List<String> splitJsonObjects(String jsonString) {
         List<String> jsonObjects = new ArrayList<>();
         int braceCount = 0;
         StringBuilder currentJson = new StringBuilder();
