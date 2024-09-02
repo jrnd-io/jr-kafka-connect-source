@@ -26,8 +26,6 @@ import org.apache.kafka.connect.data.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.*;
 
 public class JRSourceTask extends SourceTask {
@@ -37,7 +35,6 @@ public class JRSourceTask extends SourceTask {
     private Long pollMs;
     private Long last_execution = 0L;
     private Long apiOffset = 0L;
-    private String fromDate = "1970-01-01T00:00:00.0000000Z";
 
     private static final String COMMAND = "net_device";
 
@@ -58,7 +55,7 @@ public class JRSourceTask extends SourceTask {
         if (offset != null) {
             Long lastRecordedOffset = (Long) offset.get("position");
             if (lastRecordedOffset != null) {
-                LOG.info("Loaded offset: {}", apiOffset);
+                LOG.debug("Loaded offset: {}", apiOffset);
                 apiOffset = lastRecordedOffset;
             }
         }
@@ -72,13 +69,13 @@ public class JRSourceTask extends SourceTask {
             LOG.debug("Poll command: {}", command);
 
             last_execution = System.currentTimeMillis();
-            String result = execCommand(command);
+            String result = JRCommandExecutor.runTemplate(command);
 
             LOG.debug("Result: {}", result);
 
             List<SourceRecord>  sourceRecords = new ArrayList<>();
-            Map sourcePartition = Collections.singletonMap("filename", command);
-            Map sourceOffset = Collections.singletonMap("position", ++apiOffset);
+            Map<String, String> sourcePartition = Collections.singletonMap("filename", command);
+            Map<String, Long> sourceOffset = Collections.singletonMap("position", ++apiOffset);
             sourceRecords.add(new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, result));
             return sourceRecords;
         }
@@ -86,46 +83,6 @@ public class JRSourceTask extends SourceTask {
     }
 
     @Override
-    public void stop() {
-
-    }
-
-    private String execCommand(String cmd) {
-
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("bash", "-c", "jr run " + cmd);
-
-        StringBuilder output = null;
-        try {
-            Process process = processBuilder.start();
-
-            // Capture the output of the external command
-            output = new StringBuilder();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
-
-            // Wait for the process to complete and get the exit value
-            int exitVal = process.waitFor();
-            if (exitVal == 0) {
-                LOG.debug("Exit val: Success!");
-            } else {
-                // Capture and print error stream if the command failed
-                BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                StringBuilder errorOutput = new StringBuilder();
-                while ((line = errorReader.readLine()) != null) {
-                    errorOutput.append(line).append("\n");
-                }
-                LOG.debug("Exit val: Error!");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return output.toString();
-    }
-
+    public void stop() {}
 
 }
