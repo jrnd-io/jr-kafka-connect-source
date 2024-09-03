@@ -100,7 +100,8 @@ public class JRSourceTask extends SourceTask {
                     sourceRecords.add(createSourceRecord(null, record));
                 } else {
                     if(index % 2 == 0) {
-                        String updatedRecord = replaceWithKey(keyField.toLowerCase(), record, key);
+                        String replacement = extractReplacement(key);
+                        String updatedRecord = replaceWithKey(keyField.toLowerCase(), record, replacement);
                         sourceRecords.add(createSourceRecord(key, updatedRecord));
                     } else {
                         key = record;
@@ -141,11 +142,14 @@ public class JRSourceTask extends SourceTask {
         return 1L;
     }
 
-    public String replaceWithKey(String field, String originalJson, String newUserIdJson) {
-        String regex = "\""+field+"\":\\s*\"[^\"]*\"";
-        return originalJson.replaceAll(regex, "\""+field+"\": " + newUserIdJson);
+    public static String extractReplacement(String json) {
+        return json.substring(1, json.length() - 1);
     }
 
+    public static String replaceWithKey(String keyToMatch, String originalJson, String replacement) {
+        String regex = "\""+keyToMatch+"\":\\s*\"[^\"]*\"";
+        return originalJson.replaceAll(regex, replacement);
+    }
     public String getTemplate() {
         return template;
     }
