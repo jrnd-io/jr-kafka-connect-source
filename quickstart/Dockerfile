@@ -35,11 +35,13 @@ RUN CGO_ENABLED=1 GOOS=linux go build -tags static_all -v -ldflags="-X 'github.c
 
 FROM confluentinc/cp-kafka-connect-base:7.7.0
 
+ARG JR_SOURCE_CONNECTOR_VERSION=0.0.3
+
 COPY --from=builder /tmp/jr-main/templates/ /home/appuser/.jr/templates/
 COPY --from=builder /tmp/jr-main/build/jr /bin
 
 ENV JR_SYSTEM_DIR=/home/appuser/.jr
 
-COPY target/jr-kafka-connect-source-0.0.1-package.zip /tmp/jr-kafka-connect-source-0.0.1-package.zip
+COPY target/jr-kafka-connect-source-${JR_SOURCE_CONNECTOR_VERSION}-package.zip /tmp/jr-kafka-connect-source-${JR_SOURCE_CONNECTOR_VERSION}-package.zip
 
-RUN confluent-hub install --no-prompt /tmp/jr-kafka-connect-source-0.0.1-package.zip
+RUN confluent-hub install --no-prompt /tmp/jr-kafka-connect-source-${JR_SOURCE_CONNECTOR_VERSION}-package.zip

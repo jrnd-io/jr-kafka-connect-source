@@ -113,7 +113,7 @@ public class JRCommandExecutorTest {
         when(mockProcess.getInputStream()).thenReturn(new ByteArrayInputStream(mockJsonOutput.getBytes()));
         when(mockProcess.waitFor()).thenReturn(0);
 
-        List<String> result = jrCommandExecutor.runTemplate("net_device", 2);
+        List<String> result = jrCommandExecutor.runTemplate("net_device", 2, null);
 
         assertEquals(2, result.size());
     }

@@ -1,0 +1,12 @@
+{
+    "name" : "jr-keys-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "template" : "users",
+        "topic": "users",
+        "frequency" : 5000,
+        "objects": 5,
+        "key_field": "USERID",
+        "tasks.max": 1
+    }
+}

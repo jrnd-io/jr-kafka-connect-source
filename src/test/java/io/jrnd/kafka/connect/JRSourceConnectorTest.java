@@ -61,6 +61,7 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
+        config.put(JRSourceConnector.KEY_FIELD, "ID");
 
         jrSourceConnector.start(config);
 
@@ -68,6 +69,26 @@ public class JRSourceConnectorTest {
         assertEquals("test-topic", jrSourceConnector.getTopic());
         assertEquals(Long.valueOf(1000), jrSourceConnector.getPollMs());
         assertEquals(Integer.valueOf(10), jrSourceConnector.getObjects());
+        assertEquals("ID", jrSourceConnector.geyKeyField());
+    }
+
+    @Test
+    public void testStartValidConfigNoKey() {
+        when(jrCommandExecutor.templates()).thenReturn(Arrays.asList("net_device", "gaming_game"));
+
+        Map<String, String> config = new HashMap<>();
+        config.put(JRSourceConnector.JR_EXISTING_TEMPLATE, "net_device");
+        config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
+        config.put(JRSourceConnector.POLL_CONFIG, "1000");
+        config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
+
+        jrSourceConnector.start(config);
+
+        assertEquals("net_device", jrSourceConnector.getTemplate());
+        assertEquals("test-topic", jrSourceConnector.getTopic());
+        assertEquals(Long.valueOf(1000), jrSourceConnector.getPollMs());
+        assertEquals(Integer.valueOf(10), jrSourceConnector.getObjects());
+        assertNull(jrSourceConnector.geyKeyField());
     }
 
     @Test
@@ -127,6 +148,7 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
+        config.put(JRSourceConnector.KEY_FIELD, "ID");
 
         jrSourceConnector.start(config);
 
@@ -137,5 +159,6 @@ public class JRSourceConnectorTest {
         assertEquals("test-topic", taskConfigs.get(0).get(JRSourceConnector.TOPIC_CONFIG));
         assertEquals("1000", taskConfigs.get(0).get(JRSourceConnector.POLL_CONFIG));
         assertEquals("10", taskConfigs.get(0).get(JRSourceConnector.OBJECTS_CONFIG));
+        assertEquals("ID", taskConfigs.get(0).get(JRSourceConnector.KEY_FIELD));
     }
 }

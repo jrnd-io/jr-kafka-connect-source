@@ -41,6 +41,7 @@ public class JRSourceConnector extends SourceConnector {
     public static final String TOPIC_CONFIG = "topic";
     public static final String POLL_CONFIG = "frequency";
     public static final String OBJECTS_CONFIG = "objects";
+    public static final String KEY_FIELD = "key_field";
 
     private static final String DEFAULT_TEMPLATE = "net_device";
 
@@ -48,12 +49,14 @@ public class JRSourceConnector extends SourceConnector {
     private String template;
     private Long pollMs;
     private Integer objects;
+    private String keyField;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, "net_device", ConfigDef.Importance.HIGH, "A valid JR existing template name.")
             .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to.")
             .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds.")
-            .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.");
+            .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.")
+            .define(KEY_FIELD, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Name for object key field, for example ID");
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
@@ -85,8 +88,10 @@ public class JRSourceConnector extends SourceConnector {
         if(objects == null || objects < 1)
             objects = 1;
 
+        keyField = parsedConfig.getString(KEY_FIELD);
+
         if (LOG.isInfoEnabled())
-            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {}", template, topic, pollMs, objects);
+            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {} - keyExpression: {}", template, topic, pollMs, objects, keyField);
     }
 
     @Override
@@ -102,6 +107,8 @@ public class JRSourceConnector extends SourceConnector {
         config.put(TOPIC_CONFIG, topic);
         config.put(POLL_CONFIG, String.valueOf(pollMs));
         config.put(OBJECTS_CONFIG, String.valueOf(objects));
+        if(keyField != null && !keyField.isEmpty())
+            config.put(KEY_FIELD, keyField);
         configs.add(config);
         return configs;
     }
@@ -135,7 +142,8 @@ public class JRSourceConnector extends SourceConnector {
         return topic;
     }
 
-    public JRCommandExecutor getJrCommandExecutor() {
-        return jrCommandExecutor;
+    public String geyKeyField() {
+        return keyField;
     }
+
 }

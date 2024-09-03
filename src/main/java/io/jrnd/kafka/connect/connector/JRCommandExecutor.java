@@ -38,6 +38,12 @@ public class JRCommandExecutor {
     public static JRCommandExecutor getInstance() {
         return JRCommandExecutorHelper.INSTANCE;
     }
+
+    public static void main(String [] args) throws Exception {
+        JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance();
+        List<String> result = jrCommandExecutor.runTemplate("net_device", 10, "ID");
+        System.out.println(result);
+    }
     
     public List<String> templates() {
         List<String> templates = new ArrayList<>();
@@ -67,11 +73,16 @@ public class JRCommandExecutor {
         return templates; 
     }
 
-    public List<String> runTemplate(String template, int objects) {
+    public List<String> runTemplate(String template, int objects, String keyField) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("bash", "-c", "jr run " + template + " -n " + objects);
+        if(keyField == null || keyField.isEmpty())
+            processBuilder.command("bash", "-c", "jr run " + template + " -n " + objects);
+        else {
+            String command =  "jr run " + template + " --key '{{key " + "\"{\\\""+keyField+"\\\":\" 100}" + "}}' --outputTemplate '{{.K}}{{.V}}' -n " + objects;
+            processBuilder.command("bash", "-c", command);
 
+        }
         StringBuilder output = null;
         try {
             Process process = processBuilder.start();

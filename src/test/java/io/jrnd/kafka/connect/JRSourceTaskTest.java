@@ -100,7 +100,7 @@ public class JRSourceTaskTest {
     public void testPoll() {
         jrSourceTask.start(config);
 
-        when(jrCommandExecutor.runTemplate("net_device", 10)).thenReturn(Arrays.asList("record1", "record2"));
+        when(jrCommandExecutor.runTemplate("net_device", 10, null)).thenReturn(Arrays.asList("record1", "record2"));
         List<SourceRecord> records = jrSourceTask.poll();
 
         assertEquals(2, records.size());

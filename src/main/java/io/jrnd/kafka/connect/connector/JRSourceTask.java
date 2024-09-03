@@ -39,6 +39,7 @@ public class JRSourceTask extends SourceTask {
     private String topic;
     private Long pollMs;
     private Integer objects;
+    private String keyField;
     private Long last_execution = 0L;
     private Long apiOffset = 0L;
     private String fromDate = "1970-01-01T00:00:00.0000000Z";
@@ -59,6 +60,8 @@ public class JRSourceTask extends SourceTask {
         topic = map.get(JRSourceConnector.TOPIC_CONFIG);
         pollMs = Long.valueOf(map.get(JRSourceConnector.POLL_CONFIG));
         objects = Integer.valueOf(map.get(JRSourceConnector.OBJECTS_CONFIG));
+        if(map.containsKey(JRSourceConnector.KEY_FIELD))
+            keyField = map.get(JRSourceConnector.KEY_FIELD);
 
         Map<String, Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(TEMPLATE, template));
         if (offset != null) {
@@ -82,22 +85,27 @@ public class JRSourceTask extends SourceTask {
             }
 
             last_execution = System.currentTimeMillis();
-            List<String> result = jrCommandExecutor.runTemplate(template, objects);
+            List<String> result = jrCommandExecutor.runTemplate(template, objects, keyField);
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Result from JR command: {}", result);
 
             List<SourceRecord> sourceRecords = new ArrayList<>();
 
+            int index = 1;
+            String key = null;
             for(String record: result) {
 
-                String newFromDate = LocalDateTime.now().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-                apiOffset = calculateApiOffset(apiOffset, newFromDate, fromDate);
-                fromDate = newFromDate;
-
-                Map<String, Object> sourcePartition = Collections.singletonMap(TEMPLATE, template);
-                Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
-                sourceRecords.add(new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, record));
+                if(keyField == null || keyField.isEmpty()) {
+                    sourceRecords.add(createSourceRecord(null, record));
+                } else {
+                    if(index % 2 == 0) {
+                        sourceRecords.add(createSourceRecord(key, record));
+                    } else {
+                        key = record;
+                    }
+                    index++;
+                }
 
                 if (LOG.isDebugEnabled())
                     LOG.debug("new fromDate is {}.", fromDate);
@@ -110,6 +118,20 @@ public class JRSourceTask extends SourceTask {
 
     @Override
     public void stop() {}
+
+    public SourceRecord createSourceRecord(String recordKey, String recordValue) {
+        String newFromDate = LocalDateTime.now().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        apiOffset = calculateApiOffset(apiOffset, newFromDate, fromDate);
+        fromDate = newFromDate;
+
+        Map<String, Object> sourcePartition = Collections.singletonMap(TEMPLATE, template);
+        Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
+
+        if(recordKey != null && !recordKey.isEmpty())
+            return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, Schema.STRING_SCHEMA, recordValue);
+        else
+            return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordValue);
+    }
 
     public long calculateApiOffset(long currentLoopOffset, String newFromDate, String oldFromDate) {
         if (newFromDate.equals(oldFromDate)) {
@@ -134,10 +156,6 @@ public class JRSourceTask extends SourceTask {
         return objects;
     }
 
-    public Long getLast_execution() {
-        return last_execution;
-    }
-
     public void setLast_execution(Long last_execution) {
         this.last_execution = last_execution;
     }
@@ -146,8 +164,8 @@ public class JRSourceTask extends SourceTask {
         return apiOffset;
     }
 
-    public String getFromDate() {
-        return fromDate;
+    public String getKeyField() {
+        return keyField;
     }
 
 }
