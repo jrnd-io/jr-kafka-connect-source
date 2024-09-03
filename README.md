@@ -89,13 +89,11 @@ A JR connector job for template _users_ will be instantiated and produce 5 new r
 
 ```
 kafka-console-consumer --bootstrap-server localhost:9092 --topic users --from-beginning --property print.key=true
-{"USERID":2}	{    "registertime": 1493746876617,    "userid": {"USERID":2},    "regionid": "Region_6",    "gender": "FEMALE"}
-{"USERID":81}	{    "registertime": 1506768044762,    "userid": {"USERID":81},    "regionid": "Region_1",    "gender": "MALE"}
-{"USERID":74}	{    "registertime": 1492137303816,    "userid": {"USERID":74},    "regionid": "Region_4",    "gender": "FEMALE"}
-{"USERID":99}	{    "registertime": 1517673374519,    "userid": {"USERID":99},    "regionid": "Region_1",    "gender": "FEMALE"}
-{"USERID":32}	{    "registertime": 1510487727496,    "userid": {"USERID":32},    "regionid": "Region_8",    "gender": "OTHER"}
-{"USERID":57}	{    "registertime": 1515149660236,    "userid": {"USERID":57},    "regionid": "Region_3",    "gender": "FEMALE"}
-{"USERID":56}	{    "registertime": 1508189261996,    "userid": {"USERID":56},    "regionid": "Region_2",    "gender": "MALE"}
+{"USERID":40}	{    "registertime": 1490191925954,    "USERID":40,    "regionid": "Region_1",    "gender": "MALE"}
+{"USERID":53}	{    "registertime": 1490996658353,    "USERID":53,    "regionid": "Region_8",    "gender": "FEMALE"}
+{"USERID":61}	{    "registertime": 1491758270753,    "USERID":61,    "regionid": "Region_8",    "gender": "FEMALE"}
+{"USERID":86}	{    "registertime": 1515055706490,    "USERID":86,    "regionid": "Region_6",    "gender": "MALE"}
+{"USERID":71}	{    "registertime": 1491441559667,    "USERID":71,    "regionid": "Region_6",    "gender": "OTHER"}
 ```
 
 
