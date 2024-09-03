@@ -100,7 +100,8 @@ public class JRSourceTask extends SourceTask {
                     sourceRecords.add(createSourceRecord(null, record));
                 } else {
                     if(index % 2 == 0) {
-                        sourceRecords.add(createSourceRecord(key, record));
+                        String updatedRecord = replaceWithKey(keyField.toLowerCase(), record, key);
+                        sourceRecords.add(createSourceRecord(key, updatedRecord));
                     } else {
                         key = record;
                     }
@@ -138,6 +139,11 @@ public class JRSourceTask extends SourceTask {
             return ++currentLoopOffset;
         }
         return 1L;
+    }
+
+    public String replaceWithKey(String field, String originalJson, String newUserIdJson) {
+        String regex = "\""+field+"\":\\s*\"[^\"]*\"";
+        return originalJson.replaceAll(regex, "\""+field+"\": " + newUserIdJson);
     }
 
     public String getTemplate() {
