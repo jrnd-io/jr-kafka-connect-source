@@ -64,4 +64,6 @@ JR Source Connector can be configured with:
 
  - Download and extract the ZIP file from [releases](https://github.com/jrnd-io/jr-kafka-connect-source/releases)
  - Extract the ZIP file contents and copy the contents to the desired location on every Kafka Connect worker nodes, for example _/home/connect/jr_
+ - Install JR executable on on every Kafka Connect worker nodes, for example _brew install jr_
  - Add the folder to the plugin path in Kafka Connect properties file. For example, _plugin.path=/usr/local/share/kafka/plugins,/home/connect/jr_
+ - Restart Kafka Connect worker nodes
