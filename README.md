@@ -57,7 +57,7 @@ JR Source Connector can be configured with:
 
  - _template_: A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates
  - _topic_: target topic
- - _frequency_: Repeat the creation of a random message every X milliseconds.
+ - _frequency_: Repeat the creation of a random object every X milliseconds.
  - _objects_: Number of objects to create at every run. Default is 1.
 
 ## Install the connector
