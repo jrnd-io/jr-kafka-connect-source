@@ -45,6 +45,13 @@ A JR connector job for template _net_device_ will be instantiated and produce 5 
 }
 ```
 
+```
+kafka-console-consumer --bootstrap-server localhost:9092 --topic net_device --from-beginning --property print.key=true
+null	{"VLAN": "BETA","IPV4_SRC_ADDR": "10.1.98.6","IPV4_DST_ADDR": "10.1.185.254","IN_BYTES": 1756,"FIRST_SWITCHED": 1724287965,"LAST_SWITCHED": 1725353374,"L4_SRC_PORT": 80,"L4_DST_PORT": 443,"TCP_FLAGS": 0,"PROTOCOL": 3,"SRC_TOS": 190,"SRC_AS": 1,"DST_AS": 1,"L7_PROTO": 81,"L7_PROTO_NAME": "TCP","L7_PROTO_CATEGORY": "Transport"}
+null	{"VLAN": "BETA","IPV4_SRC_ADDR": "10.1.95.4","IPV4_DST_ADDR": "10.1.239.68","IN_BYTES": 1592,"FIRST_SWITCHED": 1722620372,"LAST_SWITCHED": 1724586369,"L4_SRC_PORT": 443,"L4_DST_PORT": 22,"TCP_FLAGS": 0,"PROTOCOL": 0,"SRC_TOS": 165,"SRC_AS": 3,"DST_AS": 1,"L7_PROTO": 443,"L7_PROTO_NAME": "HTTP","L7_PROTO_CATEGORY": "Transport"}
+null	{"VLAN": "DELTA","IPV4_SRC_ADDR": "10.1.126.149","IPV4_DST_ADDR": "10.1.219.156","IN_BYTES": 1767,"FIRST_SWITCHED": 1721931269,"LAST_SWITCHED": 1724976862,"L4_SRC_PORT": 631,"L4_DST_PORT": 80,"TCP_FLAGS": 0,"PROTOCOL": 1,"SRC_TOS": 139,"SRC_AS": 0,"DST_AS": 1,"L7_PROTO": 22,"L7_PROTO_NAME": "TCP","L7_PROTO_CATEGORY": "Application"}
+```
+
 To shut down JR Source Connector Quickstart, run command:
 
 ```
@@ -78,6 +85,17 @@ A JR connector job for template _users_ will be instantiated and produce 5 new r
         "tasks.max": 1
     }
 }
+```
+
+```
+kafka-console-consumer --bootstrap-server localhost:9092 --topic users --from-beginning --property print.key=true
+{"USERID":2}	{    "registertime": 1493746876617,    "userid": {"USERID":2},    "regionid": "Region_6",    "gender": "FEMALE"}
+{"USERID":81}	{    "registertime": 1506768044762,    "userid": {"USERID":81},    "regionid": "Region_1",    "gender": "MALE"}
+{"USERID":74}	{    "registertime": 1492137303816,    "userid": {"USERID":74},    "regionid": "Region_4",    "gender": "FEMALE"}
+{"USERID":99}	{    "registertime": 1517673374519,    "userid": {"USERID":99},    "regionid": "Region_1",    "gender": "FEMALE"}
+{"USERID":32}	{    "registertime": 1510487727496,    "userid": {"USERID":32},    "regionid": "Region_8",    "gender": "OTHER"}
+{"USERID":57}	{    "registertime": 1515149660236,    "userid": {"USERID":57},    "regionid": "Region_3",    "gender": "FEMALE"}
+{"USERID":56}	{    "registertime": 1508189261996,    "userid": {"USERID":56},    "regionid": "Region_2",    "gender": "MALE"}
 ```
 
 
