@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,22 +30,35 @@ public class JRCommandExecutor {
 
     private static final Logger LOG = LoggerFactory.getLogger(JRCommandExecutor.class);
 
+    private static final String JR_EXECUTABLE_NAME = "jr";
+    private static final String JR_OUTPUT_TEMPLATE_FORMAT = "'{{.K}}{{.V}}'";
+    private static String executablePath;
+
     private JRCommandExecutor() {}
 
     private static class JRCommandExecutorHelper {
         private static final JRCommandExecutor INSTANCE = new JRCommandExecutor();
     }
 
-    public static JRCommandExecutor getInstance() {
+    public static JRCommandExecutor getInstance(String executablePath) {
+        JRCommandExecutor.executablePath = executablePath;
         return JRCommandExecutorHelper.INSTANCE;
     }
 
-    
+
     public List<String> templates() {
         List<String> templates = new ArrayList<>();
         
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command("bash", "-c", "jr list");
+
+        StringBuilder commandBuilder = new StringBuilder();
+        if(executablePath != null && !executablePath.isEmpty()) {
+            commandBuilder.append(executablePath).append(File.separator);
+        }
+        commandBuilder.append(JR_EXECUTABLE_NAME);
+        commandBuilder.append(" list");
+
+        processBuilder.command("bash", "-c", commandBuilder.toString());
         
         try {
             Process process = processBuilder.start();
@@ -63,21 +77,48 @@ public class JRCommandExecutor {
 
         } catch (Exception e) {
             if (LOG.isErrorEnabled())
-                LOG.error("JR command failed:{}", e.getMessage());
+                LOG.error(JR_EXECUTABLE_NAME + " command failed:{}", e.getMessage());
         }
         return templates; 
     }
 
-    public List<String> runTemplate(String template, int objects, String keyField, int keyValueLength) {
+    public List<String> runTemplate(
+            String template,
+            int objects,
+            String keyField,
+            int keyValueLength) {
 
         ProcessBuilder processBuilder = new ProcessBuilder();
-        if(keyField == null || keyField.isEmpty())
-            processBuilder.command("bash", "-c", "jr run " + template + " -n " + objects);
+
+        StringBuilder commandBuilder = new StringBuilder();
+        if(executablePath != null && !executablePath.isEmpty()) {
+            commandBuilder.append(executablePath).append(File.separator);
+        }
+        commandBuilder.append(JR_EXECUTABLE_NAME);
+
+        if(keyField == null || keyField.isEmpty()) {
+            commandBuilder.append(" run ");
+            commandBuilder.append(template);
+            commandBuilder.append(" -n ");
+            commandBuilder.append(objects);
+        }
         else {
-            String command =  "jr run " + template + " --key '{{key " + "\"{\\\""+keyField+"\\\":\" "+keyValueLength+"}" + "}}' --outputTemplate '{{.K}}{{.V}}' -n " + objects;
-            processBuilder.command("bash", "-c", command);
+            commandBuilder.append(" run ");
+            commandBuilder.append(template);
+            commandBuilder.append(" --key '{{key " + "\"{\\\"");
+            commandBuilder.append(keyField);
+            commandBuilder.append("\\\":\" ");
+            commandBuilder.append(keyValueLength);
+            commandBuilder.append("}");
+            commandBuilder.append("}}' --outputTemplate ");
+            commandBuilder.append(JR_OUTPUT_TEMPLATE_FORMAT);
+            commandBuilder.append(" -n ");
+            commandBuilder.append(objects);
 
         }
+
+        processBuilder.command("bash", "-c", commandBuilder.toString());
+
         StringBuilder output = null;
         try {
             Process process = processBuilder.start();
@@ -93,7 +134,7 @@ public class JRCommandExecutor {
 
         } catch (Exception e) {
             if (LOG.isErrorEnabled())
-                LOG.error("JR command failed:{}", e.getMessage());
+                LOG.error(JR_EXECUTABLE_NAME + " command failed:{}", e.getMessage());
         }
         assert output != null;
         return splitJsonObjects(output.toString().replaceAll("\\r?\\n", ""));
@@ -109,7 +150,7 @@ public class JRCommandExecutor {
                 errorOutput.append(line).append("\n");
             }
             if (LOG.isErrorEnabled())
-                LOG.error("JR command failed:{}", errorOutput);
+                LOG.error(JR_EXECUTABLE_NAME + " command failed:{}", errorOutput);
         }
     }
 
@@ -124,7 +165,7 @@ public class JRCommandExecutor {
 
         for (char c : jsonString.toCharArray()) {
             if (c == '{') {
-                if (braceCount == 0 && currentJson.length() > 0) {
+                if (braceCount == 0 && !currentJson.isEmpty()) {
                     jsonObjects.add(currentJson.toString());
                     currentJson.setLength(0);
                 }
@@ -134,7 +175,7 @@ public class JRCommandExecutor {
                 braceCount--;
             }
             currentJson.append(c);
-            if (braceCount == 0 && currentJson.length() > 0) {
+            if (braceCount == 0 && !currentJson.isEmpty()) {
                 jsonObjects.add(currentJson.toString());
                 currentJson.setLength(0);
             }

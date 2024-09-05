@@ -33,8 +33,6 @@ import java.util.*;
 
 public class JRSourceTask extends SourceTask {
 
-    private JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance();
-
     private String template;
     private String topic;
     private Long pollMs;
@@ -44,6 +42,7 @@ public class JRSourceTask extends SourceTask {
     private Long last_execution = 0L;
     private Long apiOffset = 0L;
     private String fromDate = "1970-01-01T00:00:00.0000000Z";
+    private String jrExecutablePath;
 
     private static final String TEMPLATE = "template";
     private static final String POSITION = "position";
@@ -65,6 +64,7 @@ public class JRSourceTask extends SourceTask {
             keyField = map.get(JRSourceConnector.KEY_FIELD);
         if(map.containsKey(JRSourceConnector.KEY_VALUE_LENGTH))
             keyValueLength = Integer.valueOf(map.get(JRSourceConnector.KEY_VALUE_LENGTH));
+        jrExecutablePath = map.get(JRSourceConnector.JR_EXECUTABLE_PATH);
 
         Map<String, Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(TEMPLATE, template));
         if (offset != null) {
@@ -88,6 +88,7 @@ public class JRSourceTask extends SourceTask {
             }
 
             last_execution = System.currentTimeMillis();
+            JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
             List<String> result = jrCommandExecutor.runTemplate(template, objects, keyField, keyValueLength);
 
             if (LOG.isDebugEnabled())

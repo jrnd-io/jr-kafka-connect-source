@@ -1,6 +1,6 @@
 {
   "name" : "jr-source-connector",
-  "version" : "0.0.4",
+  "version" : "0.0.5",
   "title" : "JR Source Connector",
   "description" : "A Kafka Connector for generating data using JR, streaming quality random data.",
   "owner" : {

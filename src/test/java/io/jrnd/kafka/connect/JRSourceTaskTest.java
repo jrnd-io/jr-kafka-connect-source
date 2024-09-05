@@ -31,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -45,7 +46,7 @@ import static org.mockito.Mockito.*;
 public class JRSourceTaskTest {
 
     @Mock
-    private JRCommandExecutor jrCommandExecutor;
+    private JRCommandExecutor executor;
 
     @Mock
     private SourceTaskContext context;
@@ -60,6 +61,7 @@ public class JRSourceTaskTest {
 
     @BeforeEach
     public void setUp() {
+
         config = new HashMap<>();
         config.put(JRSourceConnector.JR_EXISTING_TEMPLATE, "net_device");
         config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
@@ -101,16 +103,9 @@ public class JRSourceTaskTest {
     //@Test
     public void testPoll() {
 
-        /* FIXME mockito-inline seems not working for singletons */
-        JRCommandExecutor mockInstance;
-        try (MockedStatic<JRCommandExecutor> singletonMock = mockStatic(JRCommandExecutor.class)) {
-            mockInstance = mock(JRCommandExecutor.class);
-            singletonMock.when(JRCommandExecutor::getInstance).thenReturn(mockInstance);
-        }
-
         jrSourceTask.start(config);
 
-        when(mockInstance.runTemplate("net_device", 10, null, 100)).thenReturn(Arrays.asList("record1", "record2"));
+        when(executor.runTemplate("net_device", 10, null, 100)).thenReturn(Arrays.asList("record1", "record2"));
         List<SourceRecord> records = jrSourceTask.poll();
 
         assertEquals(2, records.size());

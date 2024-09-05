@@ -35,9 +35,8 @@ import java.util.Map;
 
 public class JRSourceConnector extends SourceConnector {
 
-    private JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance();
-
     public static final String JR_EXISTING_TEMPLATE = "template";
+    public static final String JR_EXECUTABLE_PATH = "jr_executable_path";
     public static final String TOPIC_CONFIG = "topic";
     public static final String POLL_CONFIG = "frequency";
     public static final String OBJECTS_CONFIG = "objects";
@@ -52,26 +51,32 @@ public class JRSourceConnector extends SourceConnector {
     private Integer objects;
     private String keyField;
     private Integer keyValueLength;
+    private String jrExecutablePath;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
-            .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, "net_device", ConfigDef.Importance.HIGH, "A valid JR existing template name.")
+            .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, DEFAULT_TEMPLATE, ConfigDef.Importance.HIGH, "A valid JR existing template name.")
             .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to.")
             .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds.")
             .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.")
             .define(KEY_FIELD, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Name for key field, for example ID")
-            .define(KEY_VALUE_LENGTH, ConfigDef.Type.INT, 100, ConfigDef.Importance.MEDIUM, "Length for key value, for example 150. Default is 100.");
+            .define(KEY_VALUE_LENGTH, ConfigDef.Type.INT, 100, ConfigDef.Importance.MEDIUM, "Length for key value, for example 150. Default is 100.")
+            .define(JR_EXECUTABLE_PATH, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location for JR executable on workers.");
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
     @Override
     public void start(Map<String, String> map) {
 
+        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, map);
+
+        jrExecutablePath = parsedConfig.getString(JR_EXECUTABLE_PATH);
+        JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
+
         //check list of available templates
         List<String> templates = jrCommandExecutor.templates();
         if(templates.isEmpty())
             throw new ConfigException("JR template list is empty");
 
-        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, map);
         template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
         if(template == null || template.isEmpty())
             template = DEFAULT_TEMPLATE;
@@ -98,8 +103,8 @@ public class JRSourceConnector extends SourceConnector {
             keyValueLength = 100;
 
         if (LOG.isInfoEnabled())
-            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {} - key_name: {} - key_length: {}",
-                    template, topic, pollMs, objects, keyField, keyValueLength);
+            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {} - key_name: {} - key_length: {} - executable path: {}",
+                    template, topic, pollMs, objects, keyField, keyValueLength, jrExecutablePath);
     }
 
     @Override
@@ -119,6 +124,8 @@ public class JRSourceConnector extends SourceConnector {
             config.put(KEY_FIELD, keyField);
         if(keyValueLength != null)
             config.put(KEY_VALUE_LENGTH, String.valueOf(keyValueLength));
+        if(jrExecutablePath != null && !jrExecutablePath.isEmpty())
+            config.put(JR_EXECUTABLE_PATH, jrExecutablePath);
         configs.add(config);
         return configs;
     }
@@ -160,4 +167,7 @@ public class JRSourceConnector extends SourceConnector {
         return keyValueLength;
     }
 
+    public String getJrExecutablePath() {
+        return jrExecutablePath;
+    }
 }

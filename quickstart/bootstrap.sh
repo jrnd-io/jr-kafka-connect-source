@@ -9,7 +9,7 @@ sleep 3
 echo "Starting docker containers..."
 docker compose -f docker-compose.yml up -d
 
-echo "Waiting 60 seconds fro connect to be up..."
+echo "Waiting 60 seconds for connect to be up..."
 
 sleep 60
 
