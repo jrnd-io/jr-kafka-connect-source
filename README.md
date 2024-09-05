@@ -66,11 +66,12 @@ JR Source Connector can be configured with:
  - _topic_: target topic
  - _frequency_: Repeat the creation of a random object every X milliseconds.
  - _objects_: Number of objects to create at every run. Default is 1.
-- _key_field_: Name for object key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function key, https://jrnd.io/docs/functions/#key
+- _key_field_name_: Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key
+- _key_value_length_: Length for key value, for example 150. Default is 100. This is an _OPTIONAL_ config, if not set, length will be 100.
   
 ## Examples
 
-A JR connector job for template _users_ will be instantiated and produce 5 new random messages to _users_ topic every 5 seconds, using a message key field named USERID set with a random integer value.
+A JR connector job for template _users_ will be instantiated and produce 5 new random messages to _users_ topic every 5 seconds, using a message key field named USERID set with a random integer value between 0 and 150.
 
 ```
 {
@@ -81,7 +82,8 @@ A JR connector job for template _users_ will be instantiated and produce 5 new r
         "topic": "users",
         "frequency" : 5000,
         "objects": 5,
-        "key_field": "USERID",
+        "key_field_name": "USERID",
+        "key_value_length": 150,
         "tasks.max": 1
     }
 }

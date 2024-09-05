@@ -40,6 +40,7 @@ public class JRSourceTask extends SourceTask {
     private Long pollMs;
     private Integer objects;
     private String keyField;
+    private Integer keyValueLength;
     private Long last_execution = 0L;
     private Long apiOffset = 0L;
     private String fromDate = "1970-01-01T00:00:00.0000000Z";
@@ -62,6 +63,8 @@ public class JRSourceTask extends SourceTask {
         objects = Integer.valueOf(map.get(JRSourceConnector.OBJECTS_CONFIG));
         if(map.containsKey(JRSourceConnector.KEY_FIELD))
             keyField = map.get(JRSourceConnector.KEY_FIELD);
+        if(map.containsKey(JRSourceConnector.KEY_VALUE_LENGTH))
+            keyValueLength = Integer.valueOf(map.get(JRSourceConnector.KEY_VALUE_LENGTH));
 
         Map<String, Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(TEMPLATE, template));
         if (offset != null) {
@@ -85,7 +88,7 @@ public class JRSourceTask extends SourceTask {
             }
 
             last_execution = System.currentTimeMillis();
-            List<String> result = jrCommandExecutor.runTemplate(template, objects, keyField);
+            List<String> result = jrCommandExecutor.runTemplate(template, objects, keyField, keyValueLength);
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Result from JR command: {}", result);
@@ -176,6 +179,10 @@ public class JRSourceTask extends SourceTask {
 
     public String getKeyField() {
         return keyField;
+    }
+
+    public Integer getKeyValueLength() {
+        return keyValueLength;
     }
 
 }

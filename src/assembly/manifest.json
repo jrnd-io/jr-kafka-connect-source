@@ -1,8 +1,8 @@
 {
   "name" : "jr-source-connector",
-  "version" : "0.0.3",
+  "version" : "0.0.4",
   "title" : "JR Source Connector",
-  "description" : "A Kafka Connector for generating data using JR, streaming quality random data from the command line",
+  "description" : "A Kafka Connector for generating data using JR, streaming quality random data.",
   "owner" : {
     "username" : "jrnd.io",
     "type" : "personal",
@@ -30,5 +30,5 @@
     "url" : "https://github.com/jrnd-io/jr?tab=MIT-1-ov-file#readme"
   } ],
   "component_types" : [ "source" ],
-  "release_date" : "2024-09-03"
+  "release_date" : "2024-09-05"
 }

@@ -6,7 +6,8 @@
         "topic": "users",
         "frequency" : 5000,
         "objects": 5,
-        "key_field": "USERID",
+        "key_field_name": "USERID",
+        "key_value_length": 150,
         "tasks.max": 1
     }
 }
