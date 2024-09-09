@@ -2,7 +2,7 @@
   "name" : "jr-source-connector",
   "version" : "0.0.5",
   "title" : "JR Source Connector",
-  "description" : "A Kafka Connector for generating data using JR, streaming quality random data.",
+  "description" : "A Kafka Connector for generating data using JR, the leading streaming quality data generator.",
   "owner" : {
     "username" : "jrnd.io",
     "type" : "personal",
