@@ -88,7 +88,7 @@ A JR connector job for template _users_ will be instantiated and produce 5 new r
         "frequency" : 5000,
         "objects": 5,
         "key_field_name": "USERID",
-        "key_value_length": 150,
+        "key_value_interval_max": 150,
         "jr_executable_path": "/usr/bin",
         "tasks.max": 1
     }
