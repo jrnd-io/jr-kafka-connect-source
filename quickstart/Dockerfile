@@ -35,7 +35,7 @@ RUN CGO_ENABLED=1 GOOS=linux go build -tags static_all -v -ldflags="-X 'github.c
 
 FROM confluentinc/cp-kafka-connect-base:7.7.0
 
-ARG JR_SOURCE_CONNECTOR_VERSION=0.0.5
+ARG JR_SOURCE_CONNECTOR_VERSION=0.0.6
 
 COPY --from=builder /tmp/jr-main/templates/ /home/appuser/.jr/templates/
 COPY --from=builder /tmp/jr-main/build/jr /bin

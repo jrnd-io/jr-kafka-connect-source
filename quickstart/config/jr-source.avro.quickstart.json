@@ -1,0 +1,13 @@
+{
+    "name" : "jr-avro-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "template" : "store",
+        "topic": "store",
+        "frequency" : 5000,
+        "objects": 5,
+        "value.converter": "io.confluent.connect.avro.AvroConverter",
+        "value.converter.schema.registry.url": "http://schema-registry:8081",
+        "tasks.max": 1
+    }
+}

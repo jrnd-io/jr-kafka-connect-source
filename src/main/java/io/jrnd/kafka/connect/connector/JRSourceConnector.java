@@ -25,6 +25,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
+import org.apache.kafka.connect.storage.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,8 @@ public class JRSourceConnector extends SourceConnector {
     public static final String POLL_CONFIG = "frequency";
     public static final String OBJECTS_CONFIG = "objects";
     public static final String KEY_FIELD = "key_field_name";
-    public static final String KEY_VALUE_LENGTH = "key_value_length";
+    public static final String KEY_VALUE_INTERVAL_MAX = "key_value_interval_max";
+    public static final String VALUE_CONVERTER = "value.converter";
 
     private static final String DEFAULT_TEMPLATE = "net_device";
 
@@ -50,8 +52,9 @@ public class JRSourceConnector extends SourceConnector {
     private Long pollMs;
     private Integer objects;
     private String keyField;
-    private Integer keyValueLength;
+    private Integer keyValueIntervalMax;
     private String jrExecutablePath;
+    private String valueConverter;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, DEFAULT_TEMPLATE, ConfigDef.Importance.HIGH, "A valid JR existing template name.")
@@ -59,8 +62,10 @@ public class JRSourceConnector extends SourceConnector {
             .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds.")
             .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.")
             .define(KEY_FIELD, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Name for key field, for example ID")
-            .define(KEY_VALUE_LENGTH, ConfigDef.Type.INT, 100, ConfigDef.Importance.MEDIUM, "Length for key value, for example 150. Default is 100.")
-            .define(JR_EXECUTABLE_PATH, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location for JR executable on workers.");
+            .define(KEY_VALUE_INTERVAL_MAX, ConfigDef.Type.INT, 100, ConfigDef.Importance.MEDIUM, "Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.")
+            .define(JR_EXECUTABLE_PATH, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location for JR executable on workers.")
+            .define(VALUE_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "string or avro");
+    ;
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
@@ -98,13 +103,17 @@ public class JRSourceConnector extends SourceConnector {
 
         keyField = parsedConfig.getString(KEY_FIELD);
 
-        keyValueLength = parsedConfig.getInt(KEY_VALUE_LENGTH);
-        if(keyValueLength == null || keyValueLength < 1)
-            keyValueLength = 100;
+        keyValueIntervalMax = parsedConfig.getInt(KEY_VALUE_INTERVAL_MAX);
+        if(keyValueIntervalMax == null || keyValueIntervalMax < 1)
+            keyValueIntervalMax = 100;
+
+        valueConverter = parsedConfig.getString(VALUE_CONVERTER);
+        if(valueConverter == null || valueConverter.isEmpty())
+            valueConverter = StringConverter.class.getName();
 
         if (LOG.isInfoEnabled())
-            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {} - key_name: {} - key_length: {} - executable path: {}",
-                    template, topic, pollMs, objects, keyField, keyValueLength, jrExecutablePath);
+            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {} - key_name: {} - key_value_interval_max: {} - executable path: {}",
+                    template, topic, pollMs, objects, keyField, keyValueIntervalMax, jrExecutablePath);
     }
 
     @Override
@@ -122,10 +131,11 @@ public class JRSourceConnector extends SourceConnector {
         config.put(OBJECTS_CONFIG, String.valueOf(objects));
         if(keyField != null && !keyField.isEmpty())
             config.put(KEY_FIELD, keyField);
-        if(keyValueLength != null)
-            config.put(KEY_VALUE_LENGTH, String.valueOf(keyValueLength));
+        if(keyValueIntervalMax != null)
+            config.put(KEY_VALUE_INTERVAL_MAX, String.valueOf(keyValueIntervalMax));
         if(jrExecutablePath != null && !jrExecutablePath.isEmpty())
             config.put(JR_EXECUTABLE_PATH, jrExecutablePath);
+        config.put(VALUE_CONVERTER, valueConverter);
         configs.add(config);
         return configs;
     }
@@ -163,8 +173,8 @@ public class JRSourceConnector extends SourceConnector {
         return keyField;
     }
 
-    public Integer getKeyValueLength() {
-        return keyValueLength;
+    public Integer getKeyValueIntervalMax() {
+        return keyValueIntervalMax;
     }
 
     public String getJrExecutablePath() {

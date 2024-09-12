@@ -47,6 +47,7 @@ A JR connector job for template _net_device_ will be instantiated and produce 5 
 
 ```
 kafka-console-consumer --bootstrap-server localhost:9092 --topic net_device --from-beginning --property print.key=true
+
 null	{"VLAN": "BETA","IPV4_SRC_ADDR": "10.1.98.6","IPV4_DST_ADDR": "10.1.185.254","IN_BYTES": 1756,"FIRST_SWITCHED": 1724287965,"LAST_SWITCHED": 1725353374,"L4_SRC_PORT": 80,"L4_DST_PORT": 443,"TCP_FLAGS": 0,"PROTOCOL": 3,"SRC_TOS": 190,"SRC_AS": 1,"DST_AS": 1,"L7_PROTO": 81,"L7_PROTO_NAME": "TCP","L7_PROTO_CATEGORY": "Transport"}
 null	{"VLAN": "BETA","IPV4_SRC_ADDR": "10.1.95.4","IPV4_DST_ADDR": "10.1.239.68","IN_BYTES": 1592,"FIRST_SWITCHED": 1722620372,"LAST_SWITCHED": 1724586369,"L4_SRC_PORT": 443,"L4_DST_PORT": 22,"TCP_FLAGS": 0,"PROTOCOL": 0,"SRC_TOS": 165,"SRC_AS": 3,"DST_AS": 1,"L7_PROTO": 443,"L7_PROTO_NAME": "HTTP","L7_PROTO_CATEGORY": "Transport"}
 null	{"VLAN": "DELTA","IPV4_SRC_ADDR": "10.1.126.149","IPV4_DST_ADDR": "10.1.219.156","IN_BYTES": 1767,"FIRST_SWITCHED": 1721931269,"LAST_SWITCHED": 1724976862,"L4_SRC_PORT": 631,"L4_DST_PORT": 80,"TCP_FLAGS": 0,"PROTOCOL": 1,"SRC_TOS": 139,"SRC_AS": 0,"DST_AS": 1,"L7_PROTO": 22,"L7_PROTO_NAME": "TCP","L7_PROTO_CATEGORY": "Application"}
@@ -67,8 +68,11 @@ JR Source Connector can be configured with:
  - _frequency_: Repeat the creation of a random object every X milliseconds.
  - _objects_: Number of objects to create at every run. Default is 1.
 - _key_field_name_: Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key
-- _key_value_length_: Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.
+- _key_value_interval_max_: Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.
 - _jr_executable_path_: Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.
+
+At the moment for keys the supported format is _String_.
+For values there is also support for _Confluent Schema Registry_. and _avro schemas_ are supported.
   
 ## Examples
 
@@ -93,6 +97,7 @@ A JR connector job for template _users_ will be instantiated and produce 5 new r
 
 ```
 kafka-console-consumer --bootstrap-server localhost:9092 --topic users --from-beginning --property print.key=true
+
 {"USERID":40}	{    "registertime": 1490191925954,    "USERID":40,    "regionid": "Region_1",    "gender": "MALE"}
 {"USERID":53}	{    "registertime": 1490996658353,    "USERID":53,    "regionid": "Region_8",    "gender": "FEMALE"}
 {"USERID":61}	{    "registertime": 1491758270753,    "USERID":61,    "regionid": "Region_8",    "gender": "FEMALE"}
@@ -100,6 +105,33 @@ kafka-console-consumer --bootstrap-server localhost:9092 --topic users --from-be
 {"USERID":71}	{    "registertime": 1491441559667,    "USERID":71,    "regionid": "Region_6",    "gender": "OTHER"}
 ```
 
+A JR connector job for template _store_ will be instantiated and produce 5 new random messages to _store_ topic every 5 seconds, using the Confluent Schema Registry to register the Avro schema.
+
+```
+{
+    "name" : "jr-avro-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "template" : "store",
+        "topic": "store",
+        "frequency" : 5000,
+        "objects": 5,
+        "value.converter": "io.confluent.connect.avro.AvroConverter",
+        "value.converter.schema.registry.url": "http://schema-registry:8081",
+        "tasks.max": 1
+    }
+}
+```
+
+```
+kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic store --from-beginning --property schema.registry.url=http://localhost:8081
+
+{"store_id":1,"city":"Minneapolis","state":"AR"}
+{"store_id":2,"city":"Baltimore","state":"LA"}
+{"store_id":3,"city":"Chicago","state":"IL"}
+{"store_id":4,"city":"Chicago","state":"MN"}
+{"store_id":5,"city":"Washington","state":"OH"}
+```
 
 ## Install the connector
 

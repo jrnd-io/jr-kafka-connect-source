@@ -7,7 +7,7 @@
         "frequency" : 5000,
         "objects": 5,
         "key_field_name": "USERID",
-        "key_value_length": 150,
+        "key_value_interval_max": 150,
         "jr_executable_path": "/usr/bin",
         "tasks.max": 1
     }

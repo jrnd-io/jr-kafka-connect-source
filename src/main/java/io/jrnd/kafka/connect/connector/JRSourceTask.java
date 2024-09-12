@@ -20,9 +20,11 @@
 
 package io.jrnd.kafka.connect.connector;
 
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.storage.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +40,12 @@ public class JRSourceTask extends SourceTask {
     private Long pollMs;
     private Integer objects;
     private String keyField;
-    private Integer keyValueLength;
+    private Integer keyValueIntervalMax;
     private Long last_execution = 0L;
     private Long apiOffset = 0L;
     private String fromDate = "1970-01-01T00:00:00.0000000Z";
     private String jrExecutablePath;
+    private String valueConverter;
 
     private static final String TEMPLATE = "template";
     private static final String POSITION = "position";
@@ -62,9 +65,10 @@ public class JRSourceTask extends SourceTask {
         objects = Integer.valueOf(map.get(JRSourceConnector.OBJECTS_CONFIG));
         if(map.containsKey(JRSourceConnector.KEY_FIELD))
             keyField = map.get(JRSourceConnector.KEY_FIELD);
-        if(map.containsKey(JRSourceConnector.KEY_VALUE_LENGTH))
-            keyValueLength = Integer.valueOf(map.get(JRSourceConnector.KEY_VALUE_LENGTH));
+        if(map.containsKey(JRSourceConnector.KEY_VALUE_INTERVAL_MAX))
+            keyValueIntervalMax = Integer.valueOf(map.get(JRSourceConnector.KEY_VALUE_INTERVAL_MAX));
         jrExecutablePath = map.get(JRSourceConnector.JR_EXECUTABLE_PATH);
+        valueConverter = map.get(JRSourceConnector.VALUE_CONVERTER);
 
         Map<String, Object> offset = context.offsetStorageReader().offset(Collections.singletonMap(TEMPLATE, template));
         if (offset != null) {
@@ -89,7 +93,7 @@ public class JRSourceTask extends SourceTask {
 
             last_execution = System.currentTimeMillis();
             JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
-            List<String> result = jrCommandExecutor.runTemplate(template, objects, keyField, keyValueLength);
+            List<String> result = jrCommandExecutor.runTemplate(template, objects, keyField, keyValueIntervalMax);
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Result from JR command: {}", result);
@@ -133,10 +137,35 @@ public class JRSourceTask extends SourceTask {
         Map<String, Object> sourcePartition = Collections.singletonMap(TEMPLATE, template);
         Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
 
-        if(recordKey != null && !recordKey.isEmpty())
-            return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, Schema.STRING_SCHEMA, recordValue);
-        else
-            return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordValue);
+        if(valueConverter.equals(StringConverter.class.getName())) {
+
+            if (recordKey != null && !recordKey.isEmpty())
+                return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, Schema.STRING_SCHEMA, recordValue);
+            else
+                return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordValue);
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("avro serialization triggered");
+            }
+
+            //FIXME name for avro record
+            try {
+                org.apache.avro.Schema schema =  AvroHelper.createAvroSchemaFromJson("testRecord", recordValue);
+                Schema kafkaConnectSchema = AvroHelper.convertAvroToConnectSchema(schema);
+
+                Struct structValue = JsonToStructConverter.convertJsonToStruct(kafkaConnectSchema, recordValue);
+
+                if (recordKey != null && !recordKey.isEmpty())
+                    return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, kafkaConnectSchema, structValue);
+                else
+                    return new SourceRecord(sourcePartition, sourceOffset, topic, kafkaConnectSchema, structValue);
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
     }
 
     public long calculateApiOffset(long currentLoopOffset, String newFromDate, String oldFromDate) {
@@ -182,8 +211,8 @@ public class JRSourceTask extends SourceTask {
         return keyField;
     }
 
-    public Integer getKeyValueLength() {
-        return keyValueLength;
+    public Integer getKeyValueIntervalMax() {
+        return keyValueIntervalMax;
     }
 
 }

@@ -2,7 +2,7 @@
 
 DOCKERFILE=quickstart/Dockerfile
 IMAGE_NAME=jrndio/kafka-connect-demo-image
-IMAGE_VERSION=0.0.5
+IMAGE_VERSION=0.0.6
 
 if [[ $(uname -m) == 'arm64' ]]; then
   DOCKERFILE=quickstart/Dockerfile-arm64

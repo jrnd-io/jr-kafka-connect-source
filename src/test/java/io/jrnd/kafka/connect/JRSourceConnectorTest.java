@@ -63,7 +63,8 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
         config.put(JRSourceConnector.KEY_FIELD, "ID");
-        config.put(JRSourceConnector.KEY_VALUE_LENGTH, "200");
+        config.put(JRSourceConnector.KEY_VALUE_INTERVAL_MAX, "200");
+        config.put(JRSourceConnector.VALUE_CONVERTER, "io.confluent.connect.avro.AvroConverter");
 
         jrSourceConnector.start(config);
 
@@ -72,7 +73,7 @@ public class JRSourceConnectorTest {
         assertEquals(Long.valueOf(1000), jrSourceConnector.getPollMs());
         assertEquals(Integer.valueOf(10), jrSourceConnector.getObjects());
         assertEquals("ID", jrSourceConnector.geyKeyField());
-        assertEquals(Integer.valueOf(200), jrSourceConnector.getKeyValueLength());
+        assertEquals(Integer.valueOf(200), jrSourceConnector.getKeyValueIntervalMax());
         assertNull(jrSourceConnector.getJrExecutablePath());
     }
 
@@ -85,6 +86,7 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
+        config.put(JRSourceConnector.VALUE_CONVERTER, "io.confluent.connect.avro.AvroConverter");
 
         jrSourceConnector.start(config);
 
@@ -154,7 +156,8 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
         config.put(JRSourceConnector.KEY_FIELD, "ID");
-        config.put(JRSourceConnector.KEY_VALUE_LENGTH, "200");
+        config.put(JRSourceConnector.KEY_VALUE_INTERVAL_MAX, "200");
+        config.put(JRSourceConnector.VALUE_CONVERTER, "io.confluent.connect.avro.AvroConverter");
 
         jrSourceConnector.start(config);
 
@@ -166,7 +169,7 @@ public class JRSourceConnectorTest {
         assertEquals("1000", taskConfigs.get(0).get(JRSourceConnector.POLL_CONFIG));
         assertEquals("10", taskConfigs.get(0).get(JRSourceConnector.OBJECTS_CONFIG));
         assertEquals("ID", taskConfigs.get(0).get(JRSourceConnector.KEY_FIELD));
-        assertEquals(Integer.valueOf(200), jrSourceConnector.getKeyValueLength());
+        assertEquals(Integer.valueOf(200), jrSourceConnector.getKeyValueIntervalMax());
         assertNull(jrSourceConnector.getJrExecutablePath());
     }
 }

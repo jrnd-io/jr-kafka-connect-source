@@ -67,7 +67,7 @@ public class JRSourceTaskTest {
         config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
-        config.put(JRSourceConnector.KEY_VALUE_LENGTH, "200");
+        config.put(JRSourceConnector.KEY_VALUE_INTERVAL_MAX, "200");
 
         when(context.offsetStorageReader()).thenReturn(offsetStorageReader);
     }
