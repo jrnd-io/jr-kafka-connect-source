@@ -72,7 +72,7 @@ JR Source Connector can be configured with:
 - _jr_executable_path_: Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.
 
 At the moment for keys the supported format is _String_.
-For values there is also support for _Confluent Schema Registry_. and _avro schemas_ are supported.
+For values there is also support for _Confluent Schema Registry_ and _avro schemas_ are supported.
   
 ## Examples
 
