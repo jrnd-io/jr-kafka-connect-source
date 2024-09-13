@@ -71,7 +71,7 @@ JR Source Connector can be configured with:
 - _**key_value_interval_max**_: Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.
 - _**jr_executable_path**_: Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.
 - _**value.converter**_: one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_ or _io.confluent.connect.json.JsonSchemaConverter_
-- _**value.converter.schema.registry.url**_: Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_. URL for Confluent Schema Registry.
+- _**value.converter.schema.registry.url**_: Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_ or _io.confluent.connect.json.JsonSchemaConverter_. URL for Confluent Schema Registry.
 
 At the moment for keys the supported format is _String_.
 For values there is also support for _Confluent Schema Registry_ with _Avro or Json schemas_ are supported.
