@@ -44,6 +44,7 @@ public class JRSourceConnector extends SourceConnector {
     public static final String KEY_FIELD = "key_field_name";
     public static final String KEY_VALUE_INTERVAL_MAX = "key_value_interval_max";
     public static final String VALUE_CONVERTER = "value.converter";
+    public static final String KEY_CONVERTER = "key.converter";
 
     private static final String DEFAULT_TEMPLATE = "net_device";
 
@@ -55,6 +56,7 @@ public class JRSourceConnector extends SourceConnector {
     private Integer keyValueIntervalMax;
     private String jrExecutablePath;
     private String valueConverter;
+    private String keyConverter = StringConverter.class.getName();
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, DEFAULT_TEMPLATE, ConfigDef.Importance.HIGH, "A valid JR existing template name.")
@@ -64,7 +66,8 @@ public class JRSourceConnector extends SourceConnector {
             .define(KEY_FIELD, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Name for key field, for example ID")
             .define(KEY_VALUE_INTERVAL_MAX, ConfigDef.Type.INT, 100, ConfigDef.Importance.MEDIUM, "Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.")
             .define(JR_EXECUTABLE_PATH, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location for JR executable on workers.")
-            .define(VALUE_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "string or avro");
+            .define(VALUE_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "one between org.apache.kafka.connect.storage.StringConverter, io.confluent.connect.avro.AvroConverter or io.confluent.connect.json.JsonSchemaConverter")
+            .define(KEY_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "org.apache.kafka.connect.storage.StringConverter");
     ;
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
@@ -136,6 +139,7 @@ public class JRSourceConnector extends SourceConnector {
         if(jrExecutablePath != null && !jrExecutablePath.isEmpty())
             config.put(JR_EXECUTABLE_PATH, jrExecutablePath);
         config.put(VALUE_CONVERTER, valueConverter);
+        config.put(KEY_CONVERTER, keyConverter);
         configs.add(config);
         return configs;
     }

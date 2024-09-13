@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package io.jrnd.kafka.connect.connector;
+package io.jrnd.kafka.connect.connector.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class JsonToStructConverter {
+public class StructHelper {
 
     public static Struct convertJsonToStruct(Schema schema, String jsonString) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();

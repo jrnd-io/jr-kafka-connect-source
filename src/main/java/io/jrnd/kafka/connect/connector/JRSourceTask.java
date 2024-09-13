@@ -20,6 +20,9 @@
 
 package io.jrnd.kafka.connect.connector;
 
+import io.jrnd.kafka.connect.connector.format.avro.AvroHelper;
+import io.jrnd.kafka.connect.connector.format.StructHelper;
+import io.jrnd.kafka.connect.connector.format.jsonschema.JsonSchemaHelper;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -28,6 +31,7 @@ import org.apache.kafka.connect.storage.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -138,34 +142,50 @@ public class JRSourceTask extends SourceTask {
         Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
 
         if(valueConverter.equals(StringConverter.class.getName())) {
-
             if (recordKey != null && !recordKey.isEmpty())
                 return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, Schema.STRING_SCHEMA, recordValue);
             else
                 return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordValue);
-        } else {
+        }
+        //FIXME eliminate static string
+        else if(valueConverter.equals("io.confluent.connect.protobuf.ProtobufConverter")) {
+            //TODO protobuf requires java class to be generated
+            throw new IllegalStateException("Not yet implemented");
+        }
+        else if(valueConverter.equals("io.confluent.connect.json.JsonSchemaConverter")) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("avro serialization triggered");
+                LOG.debug("Json Schema output format required");
             }
 
-            //FIXME name for avro record
             try {
-                org.apache.avro.Schema schema =  AvroHelper.createAvroSchemaFromJson("testRecord", recordValue);
+                Schema kafkaConnectSchema =  JsonSchemaHelper.createJsonSchemaFromJson(recordValue);
+                return createSourceRecordWithSchema(recordKey, recordValue, kafkaConnectSchema, sourcePartition, sourceOffset);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else if(valueConverter.equals("io.confluent.connect.avro.AvroConverter")){
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Avro output format required");
+            }
+
+            try {
+                org.apache.avro.Schema schema =  AvroHelper.createAvroSchemaFromJson(template + "Record", recordValue);
                 Schema kafkaConnectSchema = AvroHelper.convertAvroToConnectSchema(schema);
 
-                Struct structValue = JsonToStructConverter.convertJsonToStruct(kafkaConnectSchema, recordValue);
-
-                if (recordKey != null && !recordKey.isEmpty())
-                    return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, kafkaConnectSchema, structValue);
-                else
-                    return new SourceRecord(sourcePartition, sourceOffset, topic, kafkaConnectSchema, structValue);
+                return createSourceRecordWithSchema(recordKey, recordValue, kafkaConnectSchema, sourcePartition, sourceOffset);
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-
         }
-
+        else {
+            if (LOG.isErrorEnabled()) {
+                LOG.error("Converter class not supported");
+                throw new RuntimeException();
+            }
+        }
+        return null;
     }
 
     public long calculateApiOffset(long currentLoopOffset, String newFromDate, String oldFromDate) {
@@ -175,14 +195,24 @@ public class JRSourceTask extends SourceTask {
         return 1L;
     }
 
-    public static String extractReplacement(String json) {
+    private SourceRecord createSourceRecordWithSchema(String recordKey, String recordValue, Schema kafkaConnectSchema, Map<String, Object> sourcePartition, Map<String, Long> sourceOffset) throws IOException {
+        Struct structValue = StructHelper.convertJsonToStruct(kafkaConnectSchema, recordValue);
+
+        if (recordKey != null && !recordKey.isEmpty())
+            return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, kafkaConnectSchema, structValue);
+        else
+            return new SourceRecord(sourcePartition, sourceOffset, topic, kafkaConnectSchema, structValue);
+    }
+
+    private static String extractReplacement(String json) {
         return json.substring(1, json.length() - 1);
     }
 
-    public static String replaceWithKey(String keyToMatch, String originalJson, String replacement) {
+    private static String replaceWithKey(String keyToMatch, String originalJson, String replacement) {
         String regex = "\""+keyToMatch+"\":\\s*\"[^\"]*\"";
         return originalJson.replaceAll(regex, replacement);
     }
+
     public String getTemplate() {
         return template;
     }
