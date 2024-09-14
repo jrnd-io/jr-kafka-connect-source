@@ -23,6 +23,7 @@ package io.jrnd.kafka.connect.connector;
 import io.jrnd.kafka.connect.connector.format.avro.AvroHelper;
 import io.jrnd.kafka.connect.connector.format.StructHelper;
 import io.jrnd.kafka.connect.connector.format.jsonschema.JsonSchemaHelper;
+import io.jrnd.kafka.connect.connector.format.protobuf.ProtobufHelper;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -149,8 +150,16 @@ public class JRSourceTask extends SourceTask {
         }
         //FIXME eliminate static string
         else if(valueConverter.equals("io.confluent.connect.protobuf.ProtobufConverter")) {
-            //TODO protobuf requires java class to be generated
-            throw new IllegalStateException("Not yet implemented");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Protobuf Schema output format required");
+            }
+
+            try {
+                Schema kafkaConnectSchema =  ProtobufHelper.createProtobufSchemaFromJson(template, recordValue);
+                return createSourceRecordWithSchema(recordKey, recordValue, kafkaConnectSchema, sourcePartition, sourceOffset);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         else if(valueConverter.equals("io.confluent.connect.json.JsonSchemaConverter")) {
             if (LOG.isDebugEnabled()) {

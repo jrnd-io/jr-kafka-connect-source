@@ -1,0 +1,13 @@
+{
+    "name" : "jr-protobuf-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "template" : "shopping_rating",
+        "topic": "shopping_rating",
+        "frequency" : 5000,
+        "objects": 5,
+        "value.converter": "io.confluent.connect.protobuf.ProtobufConverter",
+        "value.converter.schema.registry.url": "http://schema-registry:8081",
+        "tasks.max": 1
+    }
+}
