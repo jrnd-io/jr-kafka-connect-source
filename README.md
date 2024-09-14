@@ -4,6 +4,7 @@ JR Source Connector for Apache Kafka Connect.
 
 > [!NOTE]  
 > JR executable should be installed on Kafka Connect Worker nodes to run the connector _(see Quickstart for an example)_. Instructions on how to install JR on a target host are available at: https://jrnd.io
+> . A _docker compose_ with a predefined Kafka Connect cluster and JR is available in _quickstart_ folder. 
 
 ## Quickstart
 
@@ -44,6 +45,7 @@ A JR connector job for template _net_device_ will be instantiated and produce 5 
     }
 }
 ```
+Consume from _net_device_ topic:
 
 ```
 kafka-console-consumer --bootstrap-server localhost:9092 --topic net_device --from-beginning --property print.key=true
@@ -99,6 +101,7 @@ A JR connector job for template _users_ will be instantiated and produce 5 new r
     }
 }
 ```
+Consume from _users_ topic:
 
 ```
 kafka-console-consumer --bootstrap-server localhost:9092 --topic users --from-beginning --property print.key=true
@@ -129,6 +132,8 @@ A JR connector job for template _store_ will be instantiated and produce 5 new r
     }
 }
 ```
+
+Consume from _store_ topic:
 
 ```
 kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic store --from-beginning --property schema.registry.url=http://localhost:8081
@@ -171,6 +176,8 @@ A JR connector job for template _payment_credit_card_ will be instantiated and p
 }
 ```
 
+Consume from _payment_credit_card_ topic:
+
 ```
 kafka-json-schema-console-consumer --bootstrap-server localhost:9092 --topic payment_credit_card --from-beginning --property schema.registry.url=http://localhost:8081
 
@@ -212,6 +219,8 @@ A JR connector job for template _shopping_rating_ will be instantiated and produ
 }
 ```
 
+Consume from _shopping_rating_ topic:
+
 ```
 kafka-protobuf-console-consumer --bootstrap-server localhost:9092 --topic shopping_rating --from-beginning --property schema.registry.url=http://localhost:8081
 
@@ -245,8 +254,8 @@ message shopping_rating {
 
 ## Install the connector
 
- - Download and extract the ZIP file from [releases](https://github.com/jrnd-io/jr-kafka-connect-source/releases)
- - Extract the ZIP file contents and copy the contents to the desired location on every Kafka Connect worker nodes, for example _/home/connect/jr_
- - Install JR executable on every Kafka Connect worker nodes, for example _brew install jr_
- - Add the folder to the plugin path in Kafka Connect properties file, for example, _plugin.path=/usr/local/share/kafka/plugins,/home/connect/jr_
- - Restart Kafka Connect worker nodes
+ - Download and extract the ZIP file from [releases](https://github.com/jrnd-io/jr-kafka-connect-source/releases).
+ - Extract the ZIP file contents and copy the contents to the desired location on every Kafka Connect worker nodes, for example _/home/connect/jr_.
+ - Install JR executable on every Kafka Connect worker nodes, for example _brew install jr_.
+ - Add the folder to the plugin path in Kafka Connect properties file, for example, _plugin.path=/usr/local/share/kafka/plugins,/home/connect/jr_.
+ - Restart Kafka Connect worker nodes.
