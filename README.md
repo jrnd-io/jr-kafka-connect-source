@@ -79,9 +79,9 @@ For values there is also support for _Confluent Schema Registry_ with _Avro, Jso
   
 ## Examples
 
-A JR connector job for template _users_ will be instantiated and produce 5 new random messages to _users_ topic every 5 seconds, using a message key field named USERID set with a random integer value between 0 and 150.
-
 ### Usage of keys
+
+A JR connector job for template _users_ will be instantiated and produce 5 new random messages to _users_ topic every 5 seconds, using a message key field named USERID set with a random integer value between 0 and 150.
 
 ```
 {
