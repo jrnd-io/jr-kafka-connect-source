@@ -58,7 +58,10 @@ public class JRCommandExecutor {
         commandBuilder.append(JR_EXECUTABLE_NAME);
         commandBuilder.append(" list");
 
-        processBuilder.command("bash", "-c", commandBuilder.toString());
+        processBuilder.command(
+                CommandInterpeter.getInstance().getCommand(),
+                CommandInterpeter.getInstance().getArguments(),
+                commandBuilder.toString());
         
         try {
             Process process = processBuilder.start();
@@ -117,7 +120,10 @@ public class JRCommandExecutor {
 
         }
 
-        processBuilder.command("bash", "-c", commandBuilder.toString());
+        processBuilder.command(
+                CommandInterpeter.getInstance().getCommand(),
+                CommandInterpeter.getInstance().getArguments(),
+                commandBuilder.toString());
 
         StringBuilder output = null;
         try {
@@ -181,5 +187,35 @@ public class JRCommandExecutor {
             }
         }
         return jsonObjects;
+    }
+
+    private static class CommandInterpeter {
+        private String command = "bash";
+        private String arguments = "-c";
+
+        private static class CommandInterpeterHelper {
+            private static final CommandInterpeter INSTANCE = new CommandInterpeter();
+        }
+
+        public static CommandInterpeter getInstance() {
+            return CommandInterpeterHelper.INSTANCE;
+        }
+
+        private CommandInterpeter() {
+
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                this.command = "cmd.exe";
+                this.arguments = "/c";
+            }
+        }
+
+        public String getCommand() {
+            return command;
+        }
+
+        public String getArguments() {
+            return arguments;
+        }
+
     }
 }

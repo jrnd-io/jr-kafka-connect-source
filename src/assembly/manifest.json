@@ -1,6 +1,6 @@
 {
   "name" : "jr-source-connector",
-  "version" : "0.0.8",
+  "version" : "0.0.9",
   "title" : "JR Source Connector",
   "description" : "A Kafka Connector for JR, the leading streaming quality data generator.",
   "owner" : {
