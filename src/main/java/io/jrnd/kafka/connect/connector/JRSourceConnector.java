@@ -29,6 +29,10 @@ import org.apache.kafka.connect.storage.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +41,7 @@ import java.util.Map;
 public class JRSourceConnector extends SourceConnector {
 
     public static final String JR_EXISTING_TEMPLATE = "template";
+    public static final String EMBEDDED_TEMPLATE = "embedded_template";
     public static final String JR_EXECUTABLE_PATH = "jr_executable_path";
     public static final String TOPIC_CONFIG = "topic";
     public static final String POLL_CONFIG = "frequency";
@@ -50,6 +55,7 @@ public class JRSourceConnector extends SourceConnector {
 
     private String topic;
     private String template;
+    private String embeddedTemplate;
     private Long pollMs;
     private Integer objects;
     private String keyField;
@@ -60,6 +66,7 @@ public class JRSourceConnector extends SourceConnector {
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, DEFAULT_TEMPLATE, ConfigDef.Importance.HIGH, "A valid JR existing template name.")
+            .define(EMBEDDED_TEMPLATE, ConfigDef.Type.STRING, null, ConfigDef.Importance.HIGH, "Location of a file containing a valid custom JR template. This property will take precedence over 'template'.")
             .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to.")
             .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds.")
             .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.")
@@ -68,7 +75,6 @@ public class JRSourceConnector extends SourceConnector {
             .define(JR_EXECUTABLE_PATH, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location for JR executable on workers.")
             .define(VALUE_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "one between org.apache.kafka.connect.storage.StringConverter, io.confluent.connect.avro.AvroConverter, io.confluent.connect.json.JsonSchemaConverter or io.confluent.connect.protobuf.ProtobufConverter")
             .define(KEY_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "org.apache.kafka.connect.storage.StringConverter");
-    ;
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
@@ -80,21 +86,33 @@ public class JRSourceConnector extends SourceConnector {
         jrExecutablePath = parsedConfig.getString(JR_EXECUTABLE_PATH);
         JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
 
-        //check list of available templates
-        List<String> templates = jrCommandExecutor.templates();
-        if(templates.isEmpty())
-            throw new ConfigException("JR template list is empty");
+        embeddedTemplate = parsedConfig.getString(EMBEDDED_TEMPLATE);
+        if (embeddedTemplate != null && !embeddedTemplate.isEmpty()) {
+            try {
+                embeddedTemplate = readFileToString(embeddedTemplate);
+                embeddedTemplate = embeddedTemplate.replaceAll("[\\n\\r]", "");
+            } catch (IOException e) {
+                throw new RuntimeException("can't read template from file.");
+            }
+        }
 
-        template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
-        if(template == null || template.isEmpty())
-            template = DEFAULT_TEMPLATE;
+        if((embeddedTemplate == null || embeddedTemplate.isEmpty())) {
+            template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
+            if(template == null || template.isEmpty())
+                template = DEFAULT_TEMPLATE;
 
-        if(!templates.contains(template))
-            throw new ConfigException("'template' must be a valid JR template");
+            //list of available templates
+            List<String> templates = jrCommandExecutor.templates();
+            if(templates.isEmpty())
+                throw new ConfigException("JR template list is empty.");
+            if(!templates.contains(template)) {
+                throw new ConfigException("'template' must be a valid JR template.");
+            }
+        }
 
         List<String> topics = parsedConfig.getList(TOPIC_CONFIG);
         if (topics == null || topics.size() != 1) {
-            throw new ConfigException("'topic' configuration requires definition of a single topic");
+            throw new ConfigException("'topic' configuration requires definition of a single topic.");
         }
         topic = topics.get(0);
 
@@ -115,8 +133,8 @@ public class JRSourceConnector extends SourceConnector {
             valueConverter = StringConverter.class.getName();
 
         if (LOG.isInfoEnabled())
-            LOG.info("Config: template: {} - topic: {} - frequency: {} - objects: {} - key_name: {} - key_value_interval_max: {} - executable path: {}",
-                    template, topic, pollMs, objects, keyField, keyValueIntervalMax, jrExecutablePath);
+            LOG.info("Config: template: {} - embedded_template: {} - topic: {} - frequency: {} - objects: {} - key_name: {} - key_value_interval_max: {} - executable path: {}",
+                    template, embeddedTemplate, topic, pollMs, objects, keyField, keyValueIntervalMax, jrExecutablePath);
     }
 
     @Override
@@ -128,7 +146,10 @@ public class JRSourceConnector extends SourceConnector {
     public List<Map<String, String>> taskConfigs(int i) {
         ArrayList<Map<String, String>> configs = new ArrayList<>();
         Map<String, String> config = new HashMap<>();
-        config.put(JR_EXISTING_TEMPLATE, template);
+        if(template != null && !template.isEmpty())
+            config.put(JR_EXISTING_TEMPLATE, template);
+        if(embeddedTemplate != null && !embeddedTemplate.isEmpty())
+            config.put(EMBEDDED_TEMPLATE, embeddedTemplate);
         config.put(TOPIC_CONFIG, topic);
         config.put(POLL_CONFIG, String.valueOf(pollMs));
         config.put(OBJECTS_CONFIG, String.valueOf(objects));
@@ -157,6 +178,11 @@ public class JRSourceConnector extends SourceConnector {
         return null;
     }
 
+    private String readFileToString(String filePath) throws IOException {
+        Path path = Paths.get(filePath);
+        return Files.readString(path);
+    }
+
     public Integer getObjects() {
         return objects;
     }
@@ -167,6 +193,10 @@ public class JRSourceConnector extends SourceConnector {
 
     public String getTemplate() {
         return template;
+    }
+
+    public String getEmbeddedTemplate() {
+        return embeddedTemplate;
     }
 
     public String getTopic() {

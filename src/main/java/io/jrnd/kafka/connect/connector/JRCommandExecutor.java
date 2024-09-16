@@ -17,6 +17,7 @@
 
 package io.jrnd.kafka.connect.connector;
 
+import io.jrnd.kafka.connect.connector.model.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +87,7 @@ public class JRCommandExecutor {
     }
 
     public List<String> runTemplate(
-            String template,
+            Template templateWrapper,
             int objects,
             String keyField,
             int keyValueLength) {
@@ -101,13 +102,13 @@ public class JRCommandExecutor {
 
         if(keyField == null || keyField.isEmpty()) {
             commandBuilder.append(" run ");
-            commandBuilder.append(template);
+            commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
             commandBuilder.append(" -n ");
             commandBuilder.append(objects);
         }
         else {
             commandBuilder.append(" run ");
-            commandBuilder.append(template);
+            commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
             commandBuilder.append(" --key '{{key " + "\"{\\\"");
             commandBuilder.append(keyField);
             commandBuilder.append("\\\":\" ");
@@ -119,6 +120,9 @@ public class JRCommandExecutor {
             commandBuilder.append(objects);
 
         }
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("JR command to execute {}", commandBuilder);
 
         processBuilder.command(
                 CommandInterpeter.getInstance().getCommand(),

@@ -66,6 +66,7 @@ tear-down.sh
 JR Source Connector can be configured with:
 
  - _**template**_: A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates
+ - _**embedded_template**_: Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes. 
  - _**topic**_: target topic
  - _**frequency**_: Repeat the creation of a random object every X milliseconds.
  - _**objects**_: Number of objects to create at every run. Default is 1.
@@ -250,6 +251,50 @@ message shopping_rating {
   string channel = 6;
   string message = 7;
 }
+```
+
+### Custom template
+
+A JR connector job with a custom template will be instantiated and produce 5 new random messages to _customer_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
+Template definition is loaded from file _/tmp/customer-template.json_.
+
+```
+{
+    "name" : "jr-avro-custom-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "embedded_template" : "/tmp/customer-template.json",
+        "topic": "customer",
+        "frequency" : 5000,
+        "objects": 5,
+        "value.converter": "io.confluent.connect.avro.AvroConverter",
+        "value.converter.schema.registry.url": "http://schema-registry:8081",
+        "tasks.max": 1
+    }
+}
+```
+
+Consume from _customer_ topic:
+
+```
+kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer --from-beginning --property schema.registry.url=http://localhost:8081
+
+{"customer_id":"6775933f-89c2-43b0-9eaf-e52e5f23293c","first_name":"Cynthia","last_name":"Foster","email":"cynthia.foster@hotmail.com","phone_number":"623 27678252","street_address":"Louisville, Cedar Lane 99, 21401","state":"Massachusetts","zip_code":"21401","country":"United States","country_code":"US"}
+{"customer_id":"a15f891e-a3e7-4720-bf59-28202596c667","first_name":"Zachary","last_name":"Harris","email":"zachary.harris@aol.com","phone_number":"747 95821702","street_address":"Austin, River Road 8, 99801","state":"Illinois","zip_code":"99801","country":"United States","country_code":"US"}
+{"customer_id":"8906111f-d6d3-4115-bd1a-3e231e3caaa2","first_name":"Julie","last_name":"Long","email":"julie.long@email.com","phone_number":"718 08720661","street_address":"Raleigh, Peachtree Street 43, 58501","state":"Georgia","zip_code":"58501","country":"United States","country_code":"US"}
+{"customer_id":"9864ef53-eadf-4012-9cd0-c79e755169df","first_name":"Bryan","last_name":"Wilson","email":"bryan.wilson@mac.com","phone_number":"984 61669636","street_address":"San Antonio, Juniper Drive 23, 17101","state":"Illinois","zip_code":"17101","country":"United States","country_code":"US"}
+{"customer_id":"a57911e5-dc9e-4da4-b280-1c0b0143538e","first_name":"Charles","last_name":"Thompson","email":"charles.thompson@gmail.com","phone_number":"726 39040449","street_address":"Richmond, Hillcrest Road 6, 43215","state":"Indiana","zip_code":"43215","country":"United States","country_code":"US"}
+```
+
+Show the _Avro_ schema registered:
+
+```
+curl -v http://localhost:8081/subjects/customer-value/versions/1/schema
+< HTTP/1.1 200 OK
+< Content-Type: application/vnd.schemaregistry.v1+json
+
+
+{"type":"record","name":"recordRecord","fields":[{"name":"customer_id","type":"string"},{"name":"first_name","type":"string"},{"name":"last_name","type":"string"},{"name":"email","type":"string"},{"name":"phone_number","type":"string"},{"name":"street_address","type":"string"},{"name":"state","type":"string"},{"name":"zip_code","type":"string"},{"name":"country","type":"string"},{"name":"country_code","type":"string"}],"connect.name":"recordRecord"}
 ```
 
 ## Install the connector

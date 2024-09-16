@@ -24,6 +24,7 @@ import io.jrnd.kafka.connect.connector.format.avro.AvroHelper;
 import io.jrnd.kafka.connect.connector.format.StructHelper;
 import io.jrnd.kafka.connect.connector.format.jsonschema.JsonSchemaHelper;
 import io.jrnd.kafka.connect.connector.format.protobuf.ProtobufHelper;
+import io.jrnd.kafka.connect.connector.model.Template;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -41,6 +42,7 @@ import java.util.*;
 public class JRSourceTask extends SourceTask {
 
     private String template;
+    private String embeddedTemplate;
     private String topic;
     private Long pollMs;
     private Integer objects;
@@ -64,10 +66,13 @@ public class JRSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
-        template = map.get(JRSourceConnector.JR_EXISTING_TEMPLATE);
+        if(map.containsKey(JRSourceConnector.JR_EXISTING_TEMPLATE))
+            template = map.get(JRSourceConnector.JR_EXISTING_TEMPLATE);
         topic = map.get(JRSourceConnector.TOPIC_CONFIG);
         pollMs = Long.valueOf(map.get(JRSourceConnector.POLL_CONFIG));
         objects = Integer.valueOf(map.get(JRSourceConnector.OBJECTS_CONFIG));
+        if(map.containsKey(JRSourceConnector.EMBEDDED_TEMPLATE))
+            embeddedTemplate = map.get(JRSourceConnector.EMBEDDED_TEMPLATE);
         if(map.containsKey(JRSourceConnector.KEY_FIELD))
             keyField = map.get(JRSourceConnector.KEY_FIELD);
         if(map.containsKey(JRSourceConnector.KEY_VALUE_INTERVAL_MAX))
@@ -98,7 +103,13 @@ public class JRSourceTask extends SourceTask {
 
             last_execution = System.currentTimeMillis();
             JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
-            List<String> result = jrCommandExecutor.runTemplate(template, objects, keyField, keyValueIntervalMax);
+            Template templateWrapper = new Template();
+            templateWrapper.setTemplate(template);
+            if(embeddedTemplate != null && !embeddedTemplate.isEmpty()) {
+                templateWrapper.setEmbedded(true);
+                templateWrapper.setTemplate(embeddedTemplate);
+            }
+            List<String> result = jrCommandExecutor.runTemplate(templateWrapper, objects, keyField, keyValueIntervalMax);
 
             if (LOG.isDebugEnabled())
                 LOG.debug("Result from JR command: {}", result);
@@ -142,6 +153,11 @@ public class JRSourceTask extends SourceTask {
         Map<String, Object> sourcePartition = Collections.singletonMap(TEMPLATE, template);
         Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
 
+        String messageName = template;
+        if(embeddedTemplate != null && !embeddedTemplate.isEmpty()) {
+            messageName = "record";
+        }
+
         if(valueConverter.equals(StringConverter.class.getName())) {
             if (recordKey != null && !recordKey.isEmpty())
                 return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, recordKey, Schema.STRING_SCHEMA, recordValue);
@@ -155,7 +171,7 @@ public class JRSourceTask extends SourceTask {
             }
 
             try {
-                Schema kafkaConnectSchema =  ProtobufHelper.createProtobufSchemaFromJson(template, recordValue);
+                Schema kafkaConnectSchema =  ProtobufHelper.createProtobufSchemaFromJson(messageName, recordValue);
                 return createSourceRecordWithSchema(recordKey, recordValue, kafkaConnectSchema, sourcePartition, sourceOffset);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -179,7 +195,7 @@ public class JRSourceTask extends SourceTask {
             }
 
             try {
-                org.apache.avro.Schema schema =  AvroHelper.createAvroSchemaFromJson(template + "Record", recordValue);
+                org.apache.avro.Schema schema =  AvroHelper.createAvroSchemaFromJson(messageName + "Record", recordValue);
                 Schema kafkaConnectSchema = AvroHelper.convertAvroToConnectSchema(schema);
 
                 return createSourceRecordWithSchema(recordKey, recordValue, kafkaConnectSchema, sourcePartition, sourceOffset);

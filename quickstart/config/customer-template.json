@@ -1,0 +1,13 @@
+
+{
+  "customer_id": "{{uuid}}",
+  "first_name": "{{name}}",
+  "last_name": "{{surname}}",
+  "email": "{{email}}",
+  "phone_number": "{{phone}}",
+  "street_address": "{{city}}, {{street}} {{building 2}}, {{zip}}",
+  "state": "{{state}}",
+  "zip_code": "{{zip}}",
+  "country": "United States",
+  "country_code": "US"
+}

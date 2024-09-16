@@ -22,6 +22,7 @@ package io.jrnd.kafka.connect;
 import io.jrnd.kafka.connect.connector.JRCommandExecutor;
 import io.jrnd.kafka.connect.connector.JRSourceConnector;
 import io.jrnd.kafka.connect.connector.JRSourceTask;
+import io.jrnd.kafka.connect.connector.model.Template;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTaskContext;
 import org.apache.kafka.connect.storage.OffsetStorageReader;
@@ -105,7 +106,10 @@ public class JRSourceTaskTest {
 
         jrSourceTask.start(config);
 
-        when(executor.runTemplate("net_device", 10, null, 100)).thenReturn(Arrays.asList("record1", "record2"));
+        Template template = new Template();
+        template.setTemplate("net_device");
+
+        when(executor.runTemplate(template, 10, null, 100)).thenReturn(Arrays.asList("record1", "record2"));
         List<SourceRecord> records = jrSourceTask.poll();
 
         assertEquals(2, records.size());

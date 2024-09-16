@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.jrnd.kafka.connect.connector.JRCommandExecutor;
+import io.jrnd.kafka.connect.connector.model.Template;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -113,7 +114,9 @@ public class JRCommandExecutorTest {
         when(mockProcess.getInputStream()).thenReturn(new ByteArrayInputStream(mockJsonOutput.getBytes()));
         when(mockProcess.waitFor()).thenReturn(0);
 
-        List<String> result = jrCommandExecutor.runTemplate("net_device", 2, null, 0);
+        Template template = new Template();
+        template.setTemplate("net_device");
+        List<String> result = jrCommandExecutor.runTemplate(template, 2, null, 0);
 
         assertEquals(2, result.size());
     }
@@ -124,7 +127,9 @@ public class JRCommandExecutorTest {
         when(mockProcess.getInputStream()).thenReturn(new ByteArrayInputStream(mockJsonOutput.getBytes()));
         when(mockProcess.waitFor()).thenReturn(0);
 
-        List<String> result = jrCommandExecutor.runTemplate("net_device", 2, "ID", 150);
+        Template template = new Template();
+        template.setTemplate("net_device");
+        List<String> result = jrCommandExecutor.runTemplate(template, 2, "ID", 150);
 
         assertEquals(4, result.size());
     }

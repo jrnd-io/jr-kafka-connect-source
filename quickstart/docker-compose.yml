@@ -37,13 +37,15 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:9092'
 
   connect:
-    image: jrndio/kafka-connect-demo-image:0.0.9
+    image: jrndio/kafka-connect-demo-image:0.0.10
     hostname: connect
     container_name: connect
     depends_on:
       - schema-registry
     ports:
       - "8083:8083"
+    volumes:
+      - ./config/customer-template.json:/tmp/customer-template.json
     environment:
       CONNECT_BOOTSTRAP_SERVERS: 'broker:9092'
       CONNECT_REST_ADVERTISED_HOST_NAME: connect

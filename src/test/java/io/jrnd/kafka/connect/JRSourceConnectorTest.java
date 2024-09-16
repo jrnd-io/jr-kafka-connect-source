@@ -109,7 +109,7 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
 
         ConfigException exception = assertThrows(ConfigException.class, () -> jrSourceConnector.start(config));
-        assertEquals("'template' must be a valid JR template", exception.getMessage());
+        assertEquals("'template' must be a valid JR template.", exception.getMessage());
     }
 
     //@Test
@@ -137,7 +137,7 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
 
         ConfigException exception = assertThrows(ConfigException.class, () -> jrSourceConnector.start(config));
-        assertEquals("'topic' configuration requires definition of a single topic", exception.getMessage());
+        assertEquals("'topic' configuration requires definition of a single topic.", exception.getMessage());
     }
 
     @Test
