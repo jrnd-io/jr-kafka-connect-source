@@ -4,7 +4,7 @@
   "title" : "JR Source Connector",
   "description" : "A Kafka Connector for JR, the leading streaming quality data generator.",
   "owner" : {
-    "username" : "jrnd.io",
+    "username" : "jrndio",
     "type" : "organization",
     "name" : "jrnd.io",
     "url" : "https://jrnd.io",

@@ -115,7 +115,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>${project.artifactId}-${project.version}-fat</finalName>
+                            <finalName>jrndio-${project.artifactId}-${project.version}-fat</finalName>
                             <artifactSet>
                                 <excludes>
                                     <exclude>classworlds:classworlds</exclude>
@@ -143,6 +143,8 @@
                         </goals>
                         <phase>package</phase>
                         <configuration>
+                            <finalName>jrndio-${project.artifactId}-${project.version}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
                                 <descriptor>src/assembly/assembly.xml</descriptor>
                             </descriptors>
