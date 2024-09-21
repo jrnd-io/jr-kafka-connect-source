@@ -2,6 +2,8 @@
 
 JR Source Connector for Apache Kafka Connect.
 
+JR is a CLI program that helps you to stream quality random data for your applications.
+
 > [!NOTE]  
 > JR executable should be installed on Kafka Connect Worker nodes to run the connector _(see Quickstart for an example)_. Instructions on how to install JR on a target host are available at: https://jrnd.io
 > . A _docker compose_ with a predefined Kafka Connect cluster and JR is available in _quickstart_ folder. 
