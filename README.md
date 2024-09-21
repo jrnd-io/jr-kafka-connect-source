@@ -297,10 +297,16 @@ curl -v http://localhost:8081/subjects/customer-value/versions/1/schema
 {"type":"record","name":"recordRecord","fields":[{"name":"customer_id","type":"string"},{"name":"first_name","type":"string"},{"name":"last_name","type":"string"},{"name":"email","type":"string"},{"name":"phone_number","type":"string"},{"name":"street_address","type":"string"},{"name":"state","type":"string"},{"name":"zip_code","type":"string"},{"name":"country","type":"string"},{"name":"country_code","type":"string"}],"connect.name":"recordRecord"}
 ```
 
-## Install the connector
+## Installation
+
+### Manual
 
  - Download and extract the ZIP file from [releases](https://github.com/jrnd-io/jr-kafka-connect-source/releases).
  - Extract the ZIP file contents and copy the contents to the desired location on every Kafka Connect worker nodes, for example _/home/connect/jr_.
  - Install JR executable on every Kafka Connect worker nodes, for example _brew install jr_.
  - Add the folder to the plugin path in Kafka Connect properties file, for example, _plugin.path=/usr/local/share/kafka/plugins,/home/connect/jr_.
  - Restart Kafka Connect worker nodes.
+
+### Confluent Hub
+
+JR Source Connector is available on Confluent Hub: https://www.confluent.io/hub/jrndio/jr-source-connector
