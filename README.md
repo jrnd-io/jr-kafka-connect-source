@@ -2,7 +2,7 @@
 
 JR Source Connector for Apache Kafka Connect.
 
-JR is a CLI program that helps you to stream quality random data for your applications.
+JR (jrnd.io) is a CLI program that helps you to stream quality random data for your applications.
 
 ## Quickstart
 
