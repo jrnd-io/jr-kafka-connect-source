@@ -16,11 +16,18 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/config</directory>
+            <directory>${project.basedir}/quickstart/config</directory>
             <outputDirectory>jr-kafka-connect-source/etc/</outputDirectory>
             <includes>
                 <include>*</include>
             </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <includes>
+                <include>README.md</include>
+            </includes>
+            <outputDirectory>jr-kafka-connect-source/doc</outputDirectory>
         </fileSet>
     </fileSets>
 

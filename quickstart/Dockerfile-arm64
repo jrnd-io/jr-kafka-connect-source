@@ -33,9 +33,9 @@ RUN go generate pkg/generator/generate.go
 RUN go get -u -d -v
 RUN CGO_ENABLED=1 GOOS=linux go build -tags static_all -v -ldflags="-X 'github.com/jrnd-io/jr/pkg/cmd.Version=${VERSION}' -X 'github.com/jrnd-io/jr/pkg/cmd.GoVersion=${GOVERSION}' -X 'github.com/jrnd-io/jr/pkg/cmd.BuildUser=${USER}' -X 'github.com/jrnd-io/jr/pkg/cmd.BuildTime=${TIME}'" -o build/jr jr.go
 
-FROM confluentinc/cp-kafka-connect-base:7.7.0
+FROM confluentinc/cp-kafka-connect-base:7.7.1
 
-ARG JR_SOURCE_CONNECTOR_VERSION=0.0.10
+ARG JR_SOURCE_CONNECTOR_VERSION=0.1.0
 
 COPY --from=builder /tmp/jr-main/templates/ /home/appuser/.jr/templates/
 COPY --from=builder /tmp/jr-main/build/jr /bin
