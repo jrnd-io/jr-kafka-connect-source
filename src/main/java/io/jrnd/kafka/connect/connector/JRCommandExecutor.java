@@ -58,6 +58,7 @@ public class JRCommandExecutor {
         }
         commandBuilder.append(JR_EXECUTABLE_NAME);
         commandBuilder.append(" list");
+        commandBuilder.append(" -n");
 
         processBuilder.command(
                 CommandInterpeter.getInstance().getCommand(),
@@ -71,9 +72,8 @@ public class JRCommandExecutor {
             String line;
             while ((line = reader.readLine()) != null) {
                 String tmpLine = line.trim();
-                if(!tmpLine.isEmpty() && !containsWhitespace(tmpLine) && tmpLine.length() > 4) {
-                    //first 4 chars to be escaped (ANSI color)
-                    templates.add(tmpLine.substring(4));
+                if(!tmpLine.isEmpty() && !containsWhitespace(tmpLine)) {
+                    templates.add(tmpLine);
                 }
             }
 
