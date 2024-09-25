@@ -3,6 +3,7 @@
   "version" : "0.1.0",
   "title" : "JR Source Connector",
   "description" : "A Kafka Connector for JR, the leading streaming quality data generator.",
+  "logo" : "assets/jr.png",
   "owner" : {
     "username" : "jrndio",
     "type" : "organization",
@@ -15,12 +16,13 @@
     "url" : "https://github.com/jrnd-io/jr-kafka-connect-source",
     "provider_name" : "Community Support"
   },
-  "tags" : [ "jr", "data generation", "random data", "datagen" ],
-  "requirements" : [ "Apache Kafka 1.x or later" ],
+  "tags" : [ "jr", "data generation", "random data", "datagen", "synthetic data", "avro", "json schema", "protobuf", "ai" ],
+  "requirements" : [ "Apache Kafka 1.x or later", "JR installed on kafka worker nodes" ],
   "features" : {
     "supported_encodings" : [ "any" ],
     "single_message_transforms" : true,
-    "kafka_connect_api" : true
+    "kafka_connect_api" : true,
+    "delivery_guarantee": ["at_least_once"]
   },
   "documentation_url" : "https://github.com/jrnd-io/jr-kafka-connect-source/README.md",
   "source_url" : "https://github.com/jrnd-io/jr-kafka-connect-source",
