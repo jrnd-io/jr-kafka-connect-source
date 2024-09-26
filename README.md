@@ -63,17 +63,19 @@ tear-down.sh
 
 JR Source Connector can be configured with:
 
- - _**template**_: A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates
- - _**embedded_template**_: Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes. 
- - _**topic**_: target topic
- - _**frequency**_: Repeat the creation of a random object every 'frequency' milliseconds.
- - _**duration**_ Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for 'duration'. If not set creation will run forever.
- - _**objects**_: Number of objects to create at every run. Default is 1.
-- _**key_field_name**_: Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key
-- _**key_value_interval_max**_: Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.
-- _**jr_executable_path**_: Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.
-- _**value.converter**_: one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_
-- _**value.converter.schema.registry.url**_: Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for Confluent Schema Registry.
+Parameter | Description                                                                                                                                                                                                                                                         | Default
+-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-
+`template` | A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates                                                                                                                                          | net_device
+`embedded_template` | Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes.                                                                                                        | 
+`topic` | destination topic on Kafka                                                                                                                                                                                                                                          |
+`frequency` | Repeat the creation of a random object every 'frequency' milliseconds.                                                                                                                                                                                              | 5000                                                                         
+`duration` | Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for 'duration'. If not set creation will run forever. | -1                                                                                              
+`objects` | Number of objects to create at every run.                                                                                                                                                                                                                           | 1                                                                                                                                   
+`key_field_name` | Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key                                                |
+`key_value_interval_max` | Maximum interval value for key value, for example 150 (0 to key_value_interval_max).                                                                                                                                                                                | 100
+`jr_executable_path` | Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.                                                                                                                                                             |
+`value.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                                     |
+`value.converter.schema.registry.url` | Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Confluent Schema Registry._                                           |
 
 > [!NOTE]  
 > At the moment for keys (_key.converter_) the supported format is _org.apache.kafka.connect.storage.StringConverter_.
