@@ -66,7 +66,7 @@ JR Source Connector can be configured with:
  - _**template**_: A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates
  - _**embedded_template**_: Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes. 
  - _**topic**_: target topic
- - _**frequency**_: Repeat the creation of a random object every X milliseconds.
+ - _**frequency**_: Repeat the creation of a random object every 'frequency' milliseconds.
  - _**objects**_: Number of objects to create at every run. Default is 1.
 - _**key_field_name**_: Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key
 - _**key_value_interval_max**_: Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.
@@ -75,7 +75,7 @@ JR Source Connector can be configured with:
 - _**value.converter.schema.registry.url**_: Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for Confluent Schema Registry.
 
 > [!NOTE]  
-> At the moment for keys the supported format is _String_.
+> At the moment for keys (_key.converter_) the supported format is _org.apache.kafka.connect.storage.StringConverter_.
 For values there is also support for _Confluent Schema Registry_ with _Avro, Json and Protobuf schemas_.
   
 ## Examples
