@@ -67,6 +67,7 @@ JR Source Connector can be configured with:
  - _**embedded_template**_: Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes. 
  - _**topic**_: target topic
  - _**frequency**_: Repeat the creation of a random object every 'frequency' milliseconds.
+ - _**duration**_ Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for 'duration'. If not set creation will run forever.
  - _**objects**_: Number of objects to create at every run. Default is 1.
 - _**key_field_name**_: Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key
 - _**key_value_interval_max**_: Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.
@@ -293,6 +294,25 @@ curl -v http://localhost:8081/subjects/customer-value/versions/1/schema
 
 
 {"type":"record","name":"recordRecord","fields":[{"name":"customer_id","type":"string"},{"name":"first_name","type":"string"},{"name":"last_name","type":"string"},{"name":"email","type":"string"},{"name":"phone_number","type":"string"},{"name":"street_address","type":"string"},{"name":"state","type":"string"},{"name":"zip_code","type":"string"},{"name":"country","type":"string"},{"name":"country_code","type":"string"}],"connect.name":"recordRecord"}
+```
+
+### Usage of duration
+
+A JR connector job for template _marketing_campaign_finance_ will be instantiated and produce 5 new random messages to _users_ topic every 10 seconds for a total duration of 30 seconds.
+
+```
+{
+    "name" : "jr-duration-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "template" : "marketing_campaign_finance",
+        "topic": "marketing_campaign_finance",
+        "frequency" : 10000,
+        "duration" : 30000,
+        "objects": 5,
+        "tasks.max": 1
+    }
+}
 ```
 
 ## Installation

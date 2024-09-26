@@ -1,0 +1,12 @@
+{
+    "name" : "jr-duration-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "template" : "marketing_campaign_finance",
+        "topic": "marketing_campaign_finance",
+        "frequency" : 10000,
+        "duration" : 30000,
+        "objects": 5,
+        "tasks.max": 1
+    }
+}

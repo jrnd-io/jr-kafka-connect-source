@@ -107,6 +107,7 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
+        config.put(JRSourceConnector.DURATION_CONFIG, "15000");
 
         ConfigException exception = assertThrows(ConfigException.class, () -> jrSourceConnector.start(config));
         assertEquals("'template' must be a valid JR template.", exception.getMessage());
@@ -154,6 +155,7 @@ public class JRSourceConnectorTest {
         config.put(JRSourceConnector.JR_EXISTING_TEMPLATE, "net_device");
         config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
         config.put(JRSourceConnector.POLL_CONFIG, "1000");
+        config.put(JRSourceConnector.DURATION_CONFIG, "3600");
         config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
         config.put(JRSourceConnector.KEY_FIELD, "ID");
         config.put(JRSourceConnector.KEY_VALUE_INTERVAL_MAX, "200");

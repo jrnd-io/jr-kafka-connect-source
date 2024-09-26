@@ -45,6 +45,10 @@ public class JRSourceTask extends SourceTask {
     private String embeddedTemplate;
     private String topic;
     private Long pollMs;
+    private Long durationMs = -1L;
+    private Long startTimeMs;
+    private Long finalTimeMs;
+    private int pollIteration = 0;
     private Integer objects;
     private String keyField;
     private Integer keyValueIntervalMax;
@@ -66,10 +70,18 @@ public class JRSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
+
         if(map.containsKey(JRSourceConnector.JR_EXISTING_TEMPLATE))
             template = map.get(JRSourceConnector.JR_EXISTING_TEMPLATE);
         topic = map.get(JRSourceConnector.TOPIC_CONFIG);
         pollMs = Long.valueOf(map.get(JRSourceConnector.POLL_CONFIG));
+        if(map.containsKey(JRSourceConnector.DURATION_CONFIG)) {
+            durationMs = Long.valueOf(map.get(JRSourceConnector.DURATION_CONFIG));
+            if(durationMs != -1 && durationMs > 1) {
+                startTimeMs = System.currentTimeMillis();
+                finalTimeMs = startTimeMs + durationMs;
+            }
+        }
         objects = Integer.valueOf(map.get(JRSourceConnector.OBJECTS_CONFIG));
         if(map.containsKey(JRSourceConnector.EMBEDDED_TEMPLATE))
             embeddedTemplate = map.get(JRSourceConnector.EMBEDDED_TEMPLATE);
@@ -94,50 +106,54 @@ public class JRSourceTask extends SourceTask {
     @Override
     public List<SourceRecord> poll() {
 
-        if (System.currentTimeMillis() > (last_execution + pollMs)) {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime > (last_execution + pollMs)) {
 
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("init fromDate is {}.", fromDate);
-                LOG.debug("Generate records for template: {}", template);
-            }
+            if(pollIteration == 0 || startTimeMs == null || currentTime < finalTimeMs) {
 
-            last_execution = System.currentTimeMillis();
-            JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
-            Template templateWrapper = new Template();
-            templateWrapper.setTemplate(template);
-            if(embeddedTemplate != null && !embeddedTemplate.isEmpty()) {
-                templateWrapper.setEmbedded(true);
-                templateWrapper.setTemplate(embeddedTemplate);
-            }
-            List<String> result = jrCommandExecutor.runTemplate(templateWrapper, objects, keyField, keyValueIntervalMax);
-
-            if (LOG.isDebugEnabled())
-                LOG.debug("Result from JR command: {}", result);
-
-            List<SourceRecord> sourceRecords = new ArrayList<>();
-
-            int index = 1;
-            String key = null;
-            for(String record: result) {
-
-                if(keyField == null || keyField.isEmpty()) {
-                    sourceRecords.add(createSourceRecord(null, record));
-                } else {
-                    if(index % 2 == 0) {
-                        String replacement = extractReplacement(key);
-                        String updatedRecord = replaceWithKey(keyField.toLowerCase(), record, replacement);
-                        sourceRecords.add(createSourceRecord(key, updatedRecord));
-                    } else {
-                        key = record;
-                    }
-                    index++;
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Generate records for template {} - currentTime {} - finalTime {}", template, currentTime, finalTimeMs);
                 }
 
-                if (LOG.isDebugEnabled())
-                    LOG.debug("new fromDate is {}.", fromDate);
-            }
+                last_execution = System.currentTimeMillis();
+                pollIteration = pollIteration + 1;
 
-            return sourceRecords;
+                JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
+                Template templateWrapper = new Template();
+                templateWrapper.setTemplate(template);
+                if (embeddedTemplate != null && !embeddedTemplate.isEmpty()) {
+                    templateWrapper.setEmbedded(true);
+                    templateWrapper.setTemplate(embeddedTemplate);
+                }
+                List<String> result = jrCommandExecutor.runTemplate(templateWrapper, objects, keyField, keyValueIntervalMax);
+
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Result from JR command: {}", result);
+
+                List<SourceRecord> sourceRecords = new ArrayList<>();
+
+                int index = 1;
+                String key = null;
+                for (String record : result) {
+
+                    if (keyField == null || keyField.isEmpty()) {
+                        sourceRecords.add(createSourceRecord(null, record));
+                    } else {
+                        if (index % 2 == 0) {
+                            String replacement = extractReplacement(key);
+                            String updatedRecord = replaceWithKey(keyField.toLowerCase(), record, replacement);
+                            sourceRecords.add(createSourceRecord(key, updatedRecord));
+                        } else {
+                            key = record;
+                        }
+                        index++;
+                    }
+
+                }
+
+
+                return sourceRecords;
+            }
         }
         return Collections.emptyList();
     }
@@ -260,14 +276,6 @@ public class JRSourceTask extends SourceTask {
 
     public Long getApiOffset() {
         return apiOffset;
-    }
-
-    public String getKeyField() {
-        return keyField;
-    }
-
-    public Integer getKeyValueIntervalMax() {
-        return keyValueIntervalMax;
     }
 
 }

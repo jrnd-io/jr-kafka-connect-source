@@ -45,6 +45,7 @@ public class JRSourceConnector extends SourceConnector {
     public static final String JR_EXECUTABLE_PATH = "jr_executable_path";
     public static final String TOPIC_CONFIG = "topic";
     public static final String POLL_CONFIG = "frequency";
+    public static final String DURATION_CONFIG = "duration";
     public static final String OBJECTS_CONFIG = "objects";
     public static final String KEY_FIELD = "key_field_name";
     public static final String KEY_VALUE_INTERVAL_MAX = "key_value_interval_max";
@@ -57,18 +58,20 @@ public class JRSourceConnector extends SourceConnector {
     private String template;
     private String embeddedTemplate;
     private Long pollMs;
+    private Long durationMs;
     private Integer objects;
     private String keyField;
     private Integer keyValueIntervalMax;
     private String jrExecutablePath;
     private String valueConverter;
-    private String keyConverter = StringConverter.class.getName();
+    private final String keyConverter = StringConverter.class.getName();
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, DEFAULT_TEMPLATE, ConfigDef.Importance.HIGH, "A valid JR existing template name.")
             .define(EMBEDDED_TEMPLATE, ConfigDef.Type.STRING, null, ConfigDef.Importance.HIGH, "Location of a file containing a valid custom JR template. This property will take precedence over 'template'.")
             .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to.")
-            .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every X milliseconds.")
+            .define(POLL_CONFIG, ConfigDef.Type.LONG, ConfigDef.Importance.HIGH, "Repeat the creation every 'frequency' milliseconds.")
+            .define(DURATION_CONFIG, ConfigDef.Type.LONG, -1, ConfigDef.Importance.MEDIUM, "Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for duration.ms.")
             .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.")
             .define(KEY_FIELD, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Name for key field, for example ID")
             .define(KEY_VALUE_INTERVAL_MAX, ConfigDef.Type.INT, 100, ConfigDef.Importance.MEDIUM, "Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.")
@@ -118,6 +121,10 @@ public class JRSourceConnector extends SourceConnector {
 
         pollMs = parsedConfig.getLong(POLL_CONFIG);
 
+        durationMs = parsedConfig.getLong(DURATION_CONFIG);
+        if(durationMs == null || durationMs < 1)
+            durationMs = -1L;
+
         objects = parsedConfig.getInt(OBJECTS_CONFIG);
         if(objects == null || objects < 1)
             objects = 1;
@@ -133,8 +140,8 @@ public class JRSourceConnector extends SourceConnector {
             valueConverter = StringConverter.class.getName();
 
         if (LOG.isInfoEnabled())
-            LOG.info("Config: template: {} - embedded_template: {} - topic: {} - frequency: {} - objects: {} - key_name: {} - key_value_interval_max: {} - executable path: {}",
-                    template, embeddedTemplate, topic, pollMs, objects, keyField, keyValueIntervalMax, jrExecutablePath);
+            LOG.info("Config: template: {} - embedded_template: {} - topic: {} - frequency: {} - duration: {} - objects: {} - key_name: {} - key_value_interval_max: {} - executable path: {}",
+                    template, embeddedTemplate, topic, pollMs, durationMs, objects, keyField, keyValueIntervalMax, jrExecutablePath);
     }
 
     @Override
@@ -152,6 +159,8 @@ public class JRSourceConnector extends SourceConnector {
             config.put(EMBEDDED_TEMPLATE, embeddedTemplate);
         config.put(TOPIC_CONFIG, topic);
         config.put(POLL_CONFIG, String.valueOf(pollMs));
+        if(durationMs != null)
+            config.put(DURATION_CONFIG, String.valueOf(durationMs));
         config.put(OBJECTS_CONFIG, String.valueOf(objects));
         if(keyField != null && !keyField.isEmpty())
             config.put(KEY_FIELD, keyField);
@@ -193,10 +202,6 @@ public class JRSourceConnector extends SourceConnector {
 
     public String getTemplate() {
         return template;
-    }
-
-    public String getEmbeddedTemplate() {
-        return embeddedTemplate;
     }
 
     public String getTopic() {
