@@ -49,6 +49,7 @@ public class JRSourceConnector extends SourceConnector {
     public static final String OBJECTS_CONFIG = "objects";
     public static final String KEY_FIELD = "key_field_name";
     public static final String KEY_VALUE_INTERVAL_MAX = "key_value_interval_max";
+    public static final String KEY_EMBEDDED_TEMPLATE = "key_embedded_template";
     public static final String VALUE_CONVERTER = "value.converter";
     public static final String KEY_CONVERTER = "key.converter";
 
@@ -62,22 +63,24 @@ public class JRSourceConnector extends SourceConnector {
     private Integer objects;
     private String keyField;
     private Integer keyValueIntervalMax;
+    private String keyEmbeddedTemplate;
     private String jrExecutablePath;
     private String valueConverter;
-    private final String keyConverter = StringConverter.class.getName();
+    private String keyConverter;
 
     private static final ConfigDef CONFIG_DEF = new ConfigDef()
             .define(JR_EXISTING_TEMPLATE, ConfigDef.Type.STRING, DEFAULT_TEMPLATE, ConfigDef.Importance.HIGH, "A valid JR existing template name.")
-            .define(EMBEDDED_TEMPLATE, ConfigDef.Type.STRING, null, ConfigDef.Importance.HIGH, "Location of a file containing a valid custom JR template. This property will take precedence over 'template'.")
+            .define(EMBEDDED_TEMPLATE, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location of a file containing a valid custom JR template. This property will take precedence over 'template'.")
             .define(TOPIC_CONFIG, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, "Topics to publish data to.")
             .define(POLL_CONFIG, ConfigDef.Type.LONG, 5000, ConfigDef.Importance.HIGH, "Repeat the creation every 'frequency' milliseconds.")
             .define(DURATION_CONFIG, ConfigDef.Type.LONG, -1, ConfigDef.Importance.MEDIUM, "Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for duration.ms.")
             .define(OBJECTS_CONFIG, ConfigDef.Type.INT, 1, ConfigDef.Importance.HIGH, "Number of objects to create at every run.")
             .define(KEY_FIELD, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Name for key field, for example ID")
             .define(KEY_VALUE_INTERVAL_MAX, ConfigDef.Type.INT, 100, ConfigDef.Importance.MEDIUM, "Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Default is 100.")
+            .define(KEY_EMBEDDED_TEMPLATE, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location of a file containing a valid custom JR template for key. This property will take precedence over 'key_field_name'.")
             .define(JR_EXECUTABLE_PATH, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "Location for JR executable on workers.")
-            .define(VALUE_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "one between org.apache.kafka.connect.storage.StringConverter, io.confluent.connect.avro.AvroConverter, io.confluent.connect.json.JsonSchemaConverter or io.confluent.connect.protobuf.ProtobufConverter")
-            .define(KEY_CONVERTER, ConfigDef.Type.STRING, null, ConfigDef.Importance.MEDIUM, "org.apache.kafka.connect.storage.StringConverter");
+            .define(VALUE_CONVERTER, ConfigDef.Type.STRING, StringConverter.class.getName(), ConfigDef.Importance.MEDIUM, "one between org.apache.kafka.connect.storage.StringConverter, io.confluent.connect.avro.AvroConverter, io.confluent.connect.json.JsonSchemaConverter or io.confluent.connect.protobuf.ProtobufConverter")
+            .define(KEY_CONVERTER, ConfigDef.Type.STRING, StringConverter.class.getName(), ConfigDef.Importance.MEDIUM, "one between org.apache.kafka.connect.storage.StringConverter, io.confluent.connect.avro.AvroConverter, io.confluent.connect.json.JsonSchemaConverter or io.confluent.connect.protobuf.ProtobufConverter");
 
     private static final Logger LOG = LoggerFactory.getLogger(JRSourceConnector.class);
 
@@ -89,22 +92,17 @@ public class JRSourceConnector extends SourceConnector {
         jrExecutablePath = parsedConfig.getString(JR_EXECUTABLE_PATH);
         JRCommandExecutor jrCommandExecutor = JRCommandExecutor.getInstance(jrExecutablePath);
 
-        embeddedTemplate = parsedConfig.getString(EMBEDDED_TEMPLATE);
-        if (embeddedTemplate != null && !embeddedTemplate.isEmpty()) {
-            try {
-                embeddedTemplate = readFileToString(embeddedTemplate);
-                embeddedTemplate = embeddedTemplate.replaceAll("[\\n\\r]", "");
-            } catch (IOException e) {
-                throw new RuntimeException("can't read template from file.");
-            }
-        }
+        pollMs = parsedConfig.getLong(POLL_CONFIG);
+
+        embeddedTemplate = readTemplate(parsedConfig, EMBEDDED_TEMPLATE);
+        keyEmbeddedTemplate = readTemplate(parsedConfig, KEY_EMBEDDED_TEMPLATE);
 
         if((embeddedTemplate == null || embeddedTemplate.isEmpty())) {
             template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
             if(template == null || template.isEmpty())
                 template = DEFAULT_TEMPLATE;
 
-            //list of available templates
+            // list of available templates from JR exec
             List<String> templates = jrCommandExecutor.templates();
             if(templates.isEmpty())
                 throw new ConfigException("JR template list is empty.");
@@ -113,13 +111,12 @@ public class JRSourceConnector extends SourceConnector {
             }
         }
 
+        // Connector supports only one target topic
         List<String> topics = parsedConfig.getList(TOPIC_CONFIG);
         if (topics == null || topics.size() != 1) {
             throw new ConfigException("'topic' configuration requires definition of a single topic.");
         }
         topic = topics.get(0);
-
-        pollMs = parsedConfig.getLong(POLL_CONFIG);
 
         durationMs = parsedConfig.getLong(DURATION_CONFIG);
         if(durationMs == null || durationMs < 1)
@@ -139,9 +136,13 @@ public class JRSourceConnector extends SourceConnector {
         if(valueConverter == null || valueConverter.isEmpty())
             valueConverter = StringConverter.class.getName();
 
+        keyConverter = parsedConfig.getString(KEY_CONVERTER);
+        if(keyConverter == null || keyConverter.isEmpty())
+            keyConverter = StringConverter.class.getName();
+
         if (LOG.isInfoEnabled())
-            LOG.info("Config: template: {} - embedded_template: {} - topic: {} - frequency: {} - duration: {} - objects: {} - key_name: {} - key_value_interval_max: {} - executable path: {}",
-                    template, embeddedTemplate, topic, pollMs, durationMs, objects, keyField, keyValueIntervalMax, jrExecutablePath);
+            LOG.info("Config: template: {} - embedded_template: {} - topic: {} - frequency: {} - duration: {} - objects: {} - key_name: {} - key_value_interval_max: {} - key_embedded_template: {}- executable path: {}",
+                    template, embeddedTemplate, topic, pollMs, durationMs, objects, keyField, keyValueIntervalMax, keyEmbeddedTemplate, jrExecutablePath);
     }
 
     @Override
@@ -157,6 +158,8 @@ public class JRSourceConnector extends SourceConnector {
             config.put(JR_EXISTING_TEMPLATE, template);
         if(embeddedTemplate != null && !embeddedTemplate.isEmpty())
             config.put(EMBEDDED_TEMPLATE, embeddedTemplate);
+        if(keyEmbeddedTemplate != null && !keyEmbeddedTemplate.isEmpty())
+            config.put(KEY_EMBEDDED_TEMPLATE, keyEmbeddedTemplate);
         config.put(TOPIC_CONFIG, topic);
         config.put(POLL_CONFIG, String.valueOf(pollMs));
         if(durationMs != null)
@@ -190,6 +193,19 @@ public class JRSourceConnector extends SourceConnector {
     private String readFileToString(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         return Files.readString(path);
+    }
+
+    private String readTemplate(AbstractConfig parsedConfig, String templateFileLocation) {
+        String result = parsedConfig.getString(templateFileLocation);
+        if (result != null && !result.isEmpty()) {
+            try {
+                result = readFileToString(templateFileLocation);
+                result = result.replaceAll("[\\n\\r]", "");
+            } catch (IOException e) {
+                throw new RuntimeException("can't read template from file.");
+            }
+        }
+        return result;
     }
 
     public Integer getObjects() {

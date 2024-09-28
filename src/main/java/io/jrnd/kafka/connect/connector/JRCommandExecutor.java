@@ -100,12 +100,26 @@ public class JRCommandExecutor {
         }
         commandBuilder.append(JR_EXECUTABLE_NAME);
 
-        if(keyField == null || keyField.isEmpty()) {
+        // Case: key with embedded template
+        if(templateWrapper.getKeyTemplate() != null && templateWrapper.getKeyTemplate().isEmpty()) {
+            commandBuilder.append(" run ");
+            commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
+            commandBuilder.append(" --key '{{ ");
+            commandBuilder.append(templateWrapper.getKeyTemplate());
+            commandBuilder.append(" }}'");
+            commandBuilder.append(" --outputTemplate ");
+            commandBuilder.append(JR_OUTPUT_TEMPLATE_FORMAT);
+            commandBuilder.append(" -n ");
+            commandBuilder.append(objects);
+        }
+        // Case: no key field and no key embedded template
+        else if(keyField == null || keyField.isEmpty()) {
             commandBuilder.append(" run ");
             commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
             commandBuilder.append(" -n ");
             commandBuilder.append(objects);
         }
+        // Case: key field and no key embedded template
         else {
             commandBuilder.append(" run ");
             commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
@@ -118,7 +132,6 @@ public class JRCommandExecutor {
             commandBuilder.append(JR_OUTPUT_TEMPLATE_FORMAT);
             commandBuilder.append(" -n ");
             commandBuilder.append(objects);
-
         }
 
         if (LOG.isDebugEnabled())
