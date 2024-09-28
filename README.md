@@ -65,59 +65,102 @@ JR Source Connector can be configured with:
 
 Parameter | Description                                                                                                                                                                                                                                                         | Default
 -|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-
-`template` | A valid JR existing template name. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates                                                                                                                                          | net_device
+`template` | A valid JR existing template name. Skipped when __embedded_template_ is set. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates                                                                                                | net_device
 `embedded_template` | Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes.                                                                                                        | 
 `topic` | destination topic on Kafka                                                                                                                                                                                                                                          |
 `frequency` | Repeat the creation of a random object every 'frequency' milliseconds.                                                                                                                                                                                              | 5000                                                                         
 `duration` | Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for 'duration'. If not set creation will run forever. | -1                                                                                              
 `objects` | Number of objects to create at every run.                                                                                                                                                                                                                           | 1                                                                                                                                   
-`key_field_name` | Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key                                                |
-`key_value_interval_max` | Maximum interval value for key value, for example 150 (0 to key_value_interval_max).                                                                                                                                                                                | 100
+`key_field_name` | Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Skipped when _key_embedded_template_ is set. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key   |
+`key_value_interval_max` | Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Skipped when _key_embedded_template_ is set.                                                                                                                                   | 100
+`key_embedded_template` | Location of a file containing a valid custom JR template for keys. This property will take precedence over _key_field_name_ and _key_value_interval_max_. File must exist on Kafka Connect Worker nodes.                                                            |
 `jr_executable_path` | Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.                                                                                                                                                             |
-`value.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                                     |
+`value.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                                     |org.apache.kafka.connect.storage.StringConverter
 `value.converter.schema.registry.url` | Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Confluent Schema Registry._                                           |
+`key.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                                     |org.apache.kafka.connect.storage.StringConverter
+`key.converter.schema.registry.url` | Only if _key.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Confluent Schema Registry._                                             |
 
-> [!NOTE]  
-> At the moment for keys (_key.converter_) the supported format is _org.apache.kafka.connect.storage.StringConverter_.
-For values there is also support for _Confluent Schema Registry_ with _Avro, Json and Protobuf schemas_.
   
 ## Examples
 
 ### Usage of keys
 
-A JR connector job for template _users_ will be instantiated and produce 5 new random messages to _users_ topic every 5 seconds, using a message key field named USERID set with a random integer value between 0 and 150.
+Connector can be configured with keys. In this example a JR connector job for template _user_ will be instantiated and produce 5 new random messages to _user_ topic every 5 seconds, using a message key field named 'guid' set with a random integer value between 0 and 150.
 
 ```
 {
     "name" : "jr-keys-quickstart",
     "config": {
         "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
-        "template" : "users",
-        "topic": "users",
+        "template" : "user",
+        "topic": "user",
         "frequency" : 5000,
         "objects": 5,
-        "key_field_name": "USERID",
+        "key_field_name": "guid",
         "key_value_interval_max": 150,
         "jr_executable_path": "/usr/bin",
         "tasks.max": 1
     }
 }
 ```
-Consume from _users_ topic:
+Consume from _user_ topic:
 
 ```
-kafka-console-consumer --bootstrap-server localhost:9092 --topic users --from-beginning --property print.key=true
+kafka-console-consumer --bootstrap-server localhost:9092 --topic user --from-beginning --property print.key=true
 
-{"USERID":40}	{    "registertime": 1490191925954,    "USERID":40,    "regionid": "Region_1",    "gender": "MALE"}
-{"USERID":53}	{    "registertime": 1490996658353,    "USERID":53,    "regionid": "Region_8",    "gender": "FEMALE"}
-{"USERID":61}	{    "registertime": 1491758270753,    "USERID":61,    "regionid": "Region_8",    "gender": "FEMALE"}
-{"USERID":86}	{    "registertime": 1515055706490,    "USERID":86,    "regionid": "Region_6",    "gender": "MALE"}
-{"USERID":71}	{    "registertime": 1491441559667,    "USERID":71,    "regionid": "Region_6",    "gender": "OTHER"}
+{"guid":131}	{  "guid":"131",  "isActive": false,  "balance": "€328.52",  "picture": "http://placehold.it/32x32",  "age": 21,  "eyeColor": "brown",  "name": "Megan Peterson",  "gender": "F",  "company": "Evil Partners",  "work_email": "megan.peterson@evilpartners.com",  "email": "megan.peterson@gmail.com",  "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Fusce elit magna, lobortis nec semper non, aliquam at nisl. Vestibulum elementum suscipit",  "country": "US",  "address": "Tucson, South Street 54, 05602",  "phone_number": "928 59979355",  "mobile": "7109146",  "latitude": 17.1992,  "longitude": -56.3007}
+{"guid":70}	{  "guid":"70",  "isActive": true,  "balance": "€633.72",  "picture": "http://placehold.it/32x32",  "age": 24,  "eyeColor": "blue",  "name": "Doris Sanders",  "gender": "F",  "company": "Angels Investors",  "work_email": "doris.sanders@angelsinvestors.com",  "email": "doris.sanders@email.com",  "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Fusce elit magna, lobortis nec semper non, aliquam at nisl. Vestibulum elementum suscipit",  "country": "US",  "address": "Memphis, Oakwood Avenue 8, 02201",  "phone_number": "502 96273890",  "mobile": "7958446",  "latitude": -45.6278,  "longitude": 124.5713}
+{"guid":36}	{  "guid":"36",  "isActive": true,  "balance": "€7783.02",  "picture": "http://placehold.it/32x32",  "age": 40,  "eyeColor": "green",  "name": "Sharon Alvarez",  "gender": "F",  "company": "Initech",  "work_email": "sharon.alvarez@initech.com",  "email": "sharon.alvarez@email.com",  "about": "Lorem ipsum dolor sit amet, laoreet ligula. Curabitur id nisl ut Lorem sit amet justo pulvinar aliquet accumsan sit amet",  "country": "US",  "address": "Columbus, Park Place 05, 32301",  "phone_number": "220 06092006",  "mobile": "1856616",  "latitude": 76.7921,  "longitude": 10.1295}
+{"guid":9}	{  "guid":"9",  "isActive": false,  "balance": "€6071.06",  "picture": "http://placehold.it/32x32",  "age": 40,  "eyeColor": "brown",  "name": "Michael Jones",  "gender": "M",  "company": "Initech",  "work_email": "michael.jones@initech.com",  "email": "michael.jones@aol.com",  "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.Fusce elit magna, lobortis nec semper non, aliquam at nisl. Vestibulum elementum suscipit",  "country": "US",  "address": "Kansas City, South Street 3, 40601",  "phone_number": "689 17290457",  "mobile": "8620336",  "latitude": -61.7961,  "longitude": -167.5185}
+{"guid":43}	{  "guid":"43",  "isActive": false,  "balance": "€8298.22",  "picture": "http://placehold.it/32x32",  "age": 38,  "eyeColor": "blue",  "name": "Denise Parker",  "gender": "F",  "company": "Veement Capital Partners",  "work_email": "denise.parker@veementcapitalpartners.com",  "email": "denise.parker@yahoo.com",  "about": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In ullamcorper non eros eget porta. Aliquam erat volutpat. Mauris molestie lobortis",  "country": "US",  "address": "Charlotte, Queen Street 6, 95814",  "phone_number": "980 95836260",  "mobile": "8203291",  "latitude": 2.5160,  "longitude": 63.2610}
 ```
 
-### Avro objects
+### Usage of duration
 
-A JR connector job for template _store_ will be instantiated and produce 5 new random messages to _store_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
+Connector can be configured to run for a duration of time. In this example a JR connector job for template _marketing_campaign_finance_ will be instantiated and produce 5 new random messages to _users_ topic every 10 seconds for a total duration of 30 seconds.
+
+```
+{
+    "name" : "jr-duration-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "template" : "marketing_campaign_finance",
+        "topic": "marketing_campaign_finance",
+        "frequency" : 10000,
+        "duration" : 30000,
+        "objects": 5,
+        "tasks.max": 1
+    }
+}
+```
+
+Consume from _marketing_campaign_finance_ topic:
+
+```
+kafka-console-consumer --bootstrap-server localhost:9092 --topic marketing_campaign_finance --from-beginning
+
+{  "time": 1610894253695,  "candidate_id": "A3272238",  "party_affiliation": "DEM",  "contribution": 1684}
+{  "time": 1614389092497,  "candidate_id": "G8822487",  "party_affiliation": "DEM",  "contribution": 3166}
+{  "time": 1600022334958,  "candidate_id": "G5165512",  "party_affiliation": "REP",  "contribution": 2933}
+{  "time": 1594525458073,  "candidate_id": "X2839265",  "party_affiliation": "DEM",  "contribution": 824}
+{  "time": 1606508742842,  "candidate_id": "T5688428",  "party_affiliation": "IND",  "contribution": 966}
+{  "time": 1614055215125,  "candidate_id": "E4299542",  "party_affiliation": "DEM",  "contribution": 1240}
+{  "time": 1610035678542,  "candidate_id": "H9769974",  "party_affiliation": "IND",  "contribution": 1793}
+{  "time": 1609662702352,  "candidate_id": "S2314618",  "party_affiliation": "DEM",  "contribution": 1531}
+{  "time": 1601632523200,  "candidate_id": "A8111647",  "party_affiliation": "IND",  "contribution": 2650}
+{  "time": 1612493464065,  "candidate_id": "B1157343",  "party_affiliation": "DEM",  "contribution": 628}
+{  "time": 1617678398100,  "candidate_id": "S7362235",  "party_affiliation": "REP",  "contribution": 3405}
+{  "time": 1608939902703,  "candidate_id": "N9165865",  "party_affiliation": "REP",  "contribution": 1909}
+{  "time": 1599100684111,  "candidate_id": "B2399959",  "party_affiliation": "REP",  "contribution": 1472}
+{  "time": 1606312277382,  "candidate_id": "J1118736",  "party_affiliation": "IND",  "contribution": 1156}
+{  "time": 1589668105856,  "candidate_id": "Q8211968",  "party_affiliation": "REP",  "contribution": 3457}
+
+Processed a total of 15 messages
+```
+
+### Schema Registry: Avro
+
+Connector can be configured to produce objects serialized using Avro. In this example a JR connector job for template _store_ will be instantiated and produce 5 new random messages to _store_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
 
 ```
 {
@@ -158,9 +201,9 @@ curl -v http://localhost:8081/subjects/store-value/versions/1/schema
 {"type":"record","name":"storeRecord","fields":[{"name":"store_id","type":"int"},{"name":"city","type":"string"},{"name":"state","type":"string"}],"connect.name":"storeRecord"}
 ```
 
-### Json schema objects
+### Schema Registry: Json schema
 
-A JR connector job for template _payment_credit_card_ will be instantiated and produce 5 new random messages to _payment_credit_card_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Json_ schema.
+Connector can be configured to produce objects serialized using JsonSchema. In this example a JR connector job for template _payment_credit_card_ will be instantiated and produce 5 new random messages to _payment_credit_card_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Json_ schema.
 
 ```
 {
@@ -201,9 +244,9 @@ curl -v http://localhost:8081/subjects/payment_credit_card-value/versions/1/sche
 {"type":"object","properties":{"cvv":{"type":"string","connect.index":2},"card_number":{"type":"string","connect.index":1},"expiration_date":{"type":"string","connect.index":3},"card_id":{"type":"number","connect.index":0,"connect.type":"float64"}}}
 ```
 
-### Protobuf objects
+### Schema Registry: Protobuf
 
-A JR connector job for template _shopping_rating_ will be instantiated and produce 5 new random messages to _shopping_rating_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Protobuf_ schema.
+Connector can be configured to produce objects serialized using Protobuf. In this example a JR connector job for template _shopping_rating_ will be instantiated and produce 5 new random messages to _shopping_rating_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Protobuf_ schema.
 
 ```
 {
@@ -254,10 +297,11 @@ message shopping_rating {
 }
 ```
 
-### Custom template
+### Custom templates
 
-A JR connector job with a custom template will be instantiated and produce 5 new random messages to _customer_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
-Template definition is loaded from file _/tmp/customer-template.json_.
+Connector can be configured with a custom template for value. In this example a JR connector job with a custom template will be instantiated and produce 5 new random messages to _customer_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
+
+Template definition is loaded from file _/tmp/customer-template.json_ existing on Kafka Connect Worker nodes.
 
 ```
 {
@@ -287,58 +331,53 @@ kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer -
 {"customer_id":"a57911e5-dc9e-4da4-b280-1c0b0143538e","first_name":"Charles","last_name":"Thompson","email":"charles.thompson@gmail.com","phone_number":"726 39040449","street_address":"Richmond, Hillcrest Road 6, 43215","state":"Indiana","zip_code":"43215","country":"United States","country_code":"US"}
 ```
 
-Show the _Avro_ schema registered:
+#### Custom templates for keys
 
-```
-curl -v http://localhost:8081/subjects/customer-value/versions/1/schema
-< HTTP/1.1 200 OK
-< Content-Type: application/vnd.schemaregistry.v1+json
+Connector can be configured to produce keys and objects serialized using Avro. In this example a JR connector job using a custom template will be instantiated and produce 5 new random messages to _customer_full_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema. Keys are created using a custom template, using the _Confluent Schema Registry_ to register the _Avro_ schema.
 
+Template definition is loaded from file _/tmp/customer-template.json_ existing on Kafka Connect Worker nodes.
 
-{"type":"record","name":"recordRecord","fields":[{"name":"customer_id","type":"string"},{"name":"first_name","type":"string"},{"name":"last_name","type":"string"},{"name":"email","type":"string"},{"name":"phone_number","type":"string"},{"name":"street_address","type":"string"},{"name":"state","type":"string"},{"name":"zip_code","type":"string"},{"name":"country","type":"string"},{"name":"country_code","type":"string"}],"connect.name":"recordRecord"}
-```
-
-### Usage of duration
-
-A JR connector job for template _marketing_campaign_finance_ will be instantiated and produce 5 new random messages to _users_ topic every 10 seconds for a total duration of 30 seconds.
+Key Template definition is loaded from file _/tmp/key-customer-template.json_ existing on Kafka Connect Worker nodes.
 
 ```
 {
-    "name" : "jr-duration-quickstart",
+    "name" : "jr-avro-custom-full-quickstart",
     "config": {
         "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
-        "template" : "marketing_campaign_finance",
-        "topic": "marketing_campaign_finance",
-        "frequency" : 10000,
-        "duration" : 30000,
+        "embedded_template" : "/tmp/customer-template.json",
+        "key_embedded_template" : "/tmp/key-customer-template.json",
+        "topic": "customer_full",
+        "frequency" : 5000,
         "objects": 5,
+        "key.converter": "io.confluent.connect.avro.AvroConverter",
+        "key.converter.schema.registry.url": "http://schema-registry:8081",
+        "value.converter": "io.confluent.connect.avro.AvroConverter",
+        "value.converter.schema.registry.url": "http://schema-registry:8081",
         "tasks.max": 1
     }
 }
 ```
 
-Consume from _marketing_campaign_finance_ topic:
+Show the _Avro_ schema registered for value:
 
 ```
-kafka-console-consumer --bootstrap-server localhost:9092 --topic marketing_campaign_finance --from-beginning
+curl -v http://localhost:8081/subjects/customer_full-value/versions/1/schema
+< HTTP/1.1 200 OK
+< Content-Type: application/vnd.schemaregistry.v1+json
 
-{  "time": 1610894253695,  "candidate_id": "A3272238",  "party_affiliation": "DEM",  "contribution": 1684}
-{  "time": 1614389092497,  "candidate_id": "G8822487",  "party_affiliation": "DEM",  "contribution": 3166}
-{  "time": 1600022334958,  "candidate_id": "G5165512",  "party_affiliation": "REP",  "contribution": 2933}
-{  "time": 1594525458073,  "candidate_id": "X2839265",  "party_affiliation": "DEM",  "contribution": 824}
-{  "time": 1606508742842,  "candidate_id": "T5688428",  "party_affiliation": "IND",  "contribution": 966}
-{  "time": 1614055215125,  "candidate_id": "E4299542",  "party_affiliation": "DEM",  "contribution": 1240}
-{  "time": 1610035678542,  "candidate_id": "H9769974",  "party_affiliation": "IND",  "contribution": 1793}
-{  "time": 1609662702352,  "candidate_id": "S2314618",  "party_affiliation": "DEM",  "contribution": 1531}
-{  "time": 1601632523200,  "candidate_id": "A8111647",  "party_affiliation": "IND",  "contribution": 2650}
-{  "time": 1612493464065,  "candidate_id": "B1157343",  "party_affiliation": "DEM",  "contribution": 628}
-{  "time": 1617678398100,  "candidate_id": "S7362235",  "party_affiliation": "REP",  "contribution": 3405}
-{  "time": 1608939902703,  "candidate_id": "N9165865",  "party_affiliation": "REP",  "contribution": 1909}
-{  "time": 1599100684111,  "candidate_id": "B2399959",  "party_affiliation": "REP",  "contribution": 1472}
-{  "time": 1606312277382,  "candidate_id": "J1118736",  "party_affiliation": "IND",  "contribution": 1156}
-{  "time": 1589668105856,  "candidate_id": "Q8211968",  "party_affiliation": "REP",  "contribution": 3457}
 
-Processed a total of 15 messages
+{"type":"record","name":"recordvalueRecord","fields":[{"name":"customer_id","type":"string"},{"name":"first_name","type":"string"},{"name":"last_name","type":"string"},{"name":"email","type":"string"},{"name":"phone_number","type":"string"},{"name":"street_address","type":"string"},{"name":"state","type":"string"},{"name":"zip_code","type":"string"},{"name":"country","type":"string"},{"name":"country_code","type":"string"}],"connect.name":"recordvalueRecord"}
+```
+
+Show the _Avro_ schema registered for key:
+
+```
+curl -v http://localhost:8081/subjects/customer_full-key/versions/1/schema
+< HTTP/1.1 200 OK
+< Content-Type: application/vnd.schemaregistry.v1+json
+
+
+{"type":"record","name":"recordkeyRecord","fields":[{"name":"customer_id","type":"string"},{"name":"last_name","type":"string"}],"connect.name":"recordkeyRecord"}
 ```
 
 ## Installation

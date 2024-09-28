@@ -20,6 +20,7 @@
 
 package io.jrnd.kafka.connect.connector;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jrnd.kafka.connect.connector.format.avro.AvroHelper;
 import io.jrnd.kafka.connect.connector.format.StructHelper;
 import io.jrnd.kafka.connect.connector.format.jsonschema.JsonSchemaHelper;
@@ -133,27 +134,39 @@ public class JRSourceTask extends SourceTask {
                 // Process results from JR exec
                 List<String> result = jrCommandExecutor.runTemplate(templateWrapper, objects, keyField, keyValueIntervalMax);
 
-                if (LOG.isDebugEnabled())
-                    LOG.debug("Result from JR exec: {}", result);
-
                 // Create Kafka Connect Source Records
                 List<SourceRecord> sourceRecords = new ArrayList<>();
                 int index = 1;
                 String key = null;
                 for (String record : result) {
-                    if ( (keyField == null || keyField.isEmpty()) && (keyEmbeddedTemplate == null || keyEmbeddedTemplate.isEmpty())) {
+
+                    if (LOG.isDebugEnabled())
+                        LOG.debug("Record {}", record);
+
+                    // Case: record with no key
+                    if ( (keyField == null || keyField.isEmpty()) && (!templateWrapper.isKeyEmbedded())) {
                         sourceRecords.add(createSourceRecord(null, record));
-                    } else {
+                    }
+                    // Case: record with a key
+                    else {
+                        // Evaluate json part representing the value
                         if (index % 2 == 0) {
-                            //TODO replacement for key embedded
-                            if(keyEmbeddedTemplate == null || keyEmbeddedTemplate.isEmpty()) {
-                                String replacement = extractReplacement(key);
-                                String updatedRecord = replaceWithKey(keyField.toLowerCase(), record, replacement);
-                                sourceRecords.add(createSourceRecord(key, updatedRecord));
-                            } else {
+                            try {
+                                ObjectMapper objectMapper = new ObjectMapper();
+                                Map<String, Object> map = objectMapper.readValue(key, Map.class);
+                                String newValueRecord = record;
+                                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                                    newValueRecord = replaceWithKey(entry.getKey(), newValueRecord, entry.getValue().toString());
+                                }
+                                sourceRecords.add(createSourceRecord(key, newValueRecord));
+                            } catch (Exception ex) {
+                                if (LOG.isWarnEnabled())
+                                    LOG.warn("Can't substitute elements in value - fallback to original record");
                                 sourceRecords.add(createSourceRecord(key, record));
                             }
-                        } else {
+                        }
+                        // Evaluate json part representing the key
+                        else {
                             key = record;
                         }
                         index++;
@@ -192,9 +205,9 @@ public class JRSourceTask extends SourceTask {
         Map<String, Long> sourceOffset = Collections.singletonMap(POSITION, ++apiOffset);
 
         String valueSchemaName = template;
-        String keySchemaName = "record-key";
+        String keySchemaName = "recordkey";
         if(embeddedTemplate != null && !embeddedTemplate.isEmpty()) {
-            valueSchemaName = "record-value";
+            valueSchemaName = "recordvalue";
         }
 
         // Case: no schema required for key
@@ -292,8 +305,14 @@ public class JRSourceTask extends SourceTask {
             Map<String, Long> sourceOffset) throws IOException {
         Struct structValue = StructHelper.convertJsonToStruct(valueKafkaConnectSchema, recordValue);
 
-        if (recordKey != null && !recordKey.isEmpty())
-            return new SourceRecord(sourcePartition, sourceOffset, topic, keyKafkaConnectSchema, recordKey, valueKafkaConnectSchema, structValue);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Record with a Schema --> key {} - value {} - keySchema {} - valueSchema {}", recordKey, recordValue, keyKafkaConnectSchema, valueKafkaConnectSchema );
+        }
+
+        if (recordKey != null && !recordKey.isEmpty()) {
+            Struct structKey = StructHelper.convertJsonToStruct(keyKafkaConnectSchema, recordKey);
+            return new SourceRecord(sourcePartition, sourceOffset, topic, keyKafkaConnectSchema, structKey, valueKafkaConnectSchema, structValue);
+        }
         else
             return new SourceRecord(sourcePartition, sourceOffset, topic, valueKafkaConnectSchema, structValue);
     }
@@ -306,13 +325,9 @@ public class JRSourceTask extends SourceTask {
         }
     }
 
-    private String extractReplacement(String json) {
-        return json.substring(1, json.length() - 1);
-    }
-
     private String replaceWithKey(String keyToMatch, String originalJson, String replacement) {
         String regex = "\""+keyToMatch+"\":\\s*\"[^\"]*\"";
-        return originalJson.replaceAll(regex, replacement);
+        return originalJson.replaceAll(regex, "\""+keyToMatch+ "\":" + "\"" + replacement + "\"");
     }
 
     public String getTemplate() {

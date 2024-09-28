@@ -94,8 +94,8 @@ public class JRSourceConnector extends SourceConnector {
 
         pollMs = parsedConfig.getLong(POLL_CONFIG);
 
-        embeddedTemplate = readTemplate(parsedConfig, EMBEDDED_TEMPLATE);
-        keyEmbeddedTemplate = readTemplate(parsedConfig, KEY_EMBEDDED_TEMPLATE);
+        embeddedTemplate = readTemplate(parsedConfig.getString(EMBEDDED_TEMPLATE));
+        keyEmbeddedTemplate = readTemplate(parsedConfig.getString(KEY_EMBEDDED_TEMPLATE));
 
         if((embeddedTemplate == null || embeddedTemplate.isEmpty())) {
             template = parsedConfig.getString(JR_EXISTING_TEMPLATE);
@@ -139,10 +139,6 @@ public class JRSourceConnector extends SourceConnector {
         keyConverter = parsedConfig.getString(KEY_CONVERTER);
         if(keyConverter == null || keyConverter.isEmpty())
             keyConverter = StringConverter.class.getName();
-
-        if (LOG.isInfoEnabled())
-            LOG.info("Config: template: {} - embedded_template: {} - topic: {} - frequency: {} - duration: {} - objects: {} - key_name: {} - key_value_interval_max: {} - key_embedded_template: {}- executable path: {}",
-                    template, embeddedTemplate, topic, pollMs, durationMs, objects, keyField, keyValueIntervalMax, keyEmbeddedTemplate, jrExecutablePath);
     }
 
     @Override
@@ -195,9 +191,9 @@ public class JRSourceConnector extends SourceConnector {
         return Files.readString(path);
     }
 
-    private String readTemplate(AbstractConfig parsedConfig, String templateFileLocation) {
-        String result = parsedConfig.getString(templateFileLocation);
-        if (result != null && !result.isEmpty()) {
+    private String readTemplate(String templateFileLocation) {
+        String result = null;
+        if (templateFileLocation != null && !templateFileLocation.isEmpty()) {
             try {
                 result = readFileToString(templateFileLocation);
                 result = result.replaceAll("[\\n\\r]", "");
