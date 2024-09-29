@@ -343,6 +343,17 @@ Template definition is loaded from file _/tmp/customer-template.json_ existing o
 }
 ```
 
+Show the _Avro_ schema registered for value:
+
+```
+curl -v http://localhost:8081/subjects/customer-value/versions/1/schema
+< HTTP/1.1 200 OK
+< Content-Type: application/vnd.schemaregistry.v1+json
+
+
+{"type":"record","name":"recordvalueRecord","fields":[{"name":"customer_id","type":"string"},{"name":"first_name","type":"string"},{"name":"last_name","type":"string"},{"name":"email","type":"string"},{"name":"phone_number","type":"string"},{"name":"street_address","type":"string"},{"name":"state","type":"string"},{"name":"zip_code","type":"string"},{"name":"country","type":"string"},{"name":"country_code","type":"string"}],"connect.name":"recordvalueRecord"}
+```
+
 Consume from _customer_ topic:
 
 ```
@@ -402,6 +413,18 @@ curl -v http://localhost:8081/subjects/customer_full-key/versions/1/schema
 
 
 {"type":"record","name":"recordkeyRecord","fields":[{"name":"customer_id","type":"string"},{"name":"last_name","type":"string"}],"connect.name":"recordkeyRecord"}
+```
+
+Consume from _customer_full_ topic:
+
+```
+kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer_full --from-beginning --property schema.registry.url=http://localhost:8081 --property print.key=true
+
+{"customer_id":"e3beafc6-4916-4da4-a624-a8b80f689f51","last_name":"Gonzalez"}	{"customer_id":"e3beafc6-4916-4da4-a624-a8b80f689f51","first_name":"Linda","last_name":"Gonzalez","email":"linda.james@yahoo.com","phone_number":"414 91888379","street_address":"Orlando, Cypress Street 14, 03301","state":"Maryland","zip_code":"03301","country":"United States","country_code":"US"}
+{"customer_id":"351ccdd0-c4da-4361-a0fd-2b88c2c28599","last_name":"Gonzalez"}	{"customer_id":"351ccdd0-c4da-4361-a0fd-2b88c2c28599","first_name":"Samantha","last_name":"Gonzalez","email":"samantha.gutierrez@hotmail.com","phone_number":"405 66116008","street_address":"Tampa, River Street 3, 84111","state":"Maine","zip_code":"84111","country":"United States","country_code":"US"}
+{"customer_id":"56b99aef-0764-4cc2-9cc6-82d0f9d0d97a","last_name":"Taylor"}	{"customer_id":"56b99aef-0764-4cc2-9cc6-82d0f9d0d97a","first_name":"Frances","last_name":"Taylor","email":"frances.reed@yahoo.com","phone_number":"813 51891158","street_address":"Washington, Franklin Avenue 3, 23219","state":"Arizona","zip_code":"23219","country":"United States","country_code":"US"}
+{"customer_id":"ddea0697-1218-40f0-81e8-3d56e324f5c6","last_name":"Baker"}	{"customer_id":"ddea0697-1218-40f0-81e8-3d56e324f5c6","first_name":"Wayne","last_name":"Baker","email":"wayne.brooks@aol.com","phone_number":"571 29789830","street_address":"Richmond, River Street 04, 43215","state":"Iowa","zip_code":"43215","country":"United States","country_code":"US"}
+{"customer_id":"0a0ea230-035e-441f-b969-9c6ad5d6f91b","last_name":"Campbell"}	{"customer_id":"0a0ea230-035e-441f-b969-9c6ad5d6f91b","first_name":"Donald","last_name":"Campbell","email":"donald.carter@aol.com","phone_number":"804 33076187","street_address":"Dallas, Orange Street 43, 30303","state":"Wyoming","zip_code":"30303","country":"United States","country_code":"US"}
 ```
 
 ## Installation
