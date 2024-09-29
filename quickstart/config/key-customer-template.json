@@ -1,0 +1,5 @@
+
+{
+  "customer_id": "{{uuid}}",
+  "last_name": "{{surname}}"
+}

@@ -23,6 +23,7 @@ package io.jrnd.kafka.connect.connector.format.protobuf;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.DescriptorProtos;
+import io.jrnd.kafka.connect.connector.format.StructHelper;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 
@@ -63,6 +64,7 @@ public class ProtobufHelper {
             JsonNode fieldValue = entry.getValue();
 
             DescriptorProtos.FieldDescriptorProto.Type protoFieldType;
+
             if (fieldValue.isTextual()) {
                 protoFieldType = DescriptorProtos.FieldDescriptorProto.Type.TYPE_STRING;
             } else if (fieldValue.isInt()) {
@@ -112,17 +114,19 @@ public class ProtobufHelper {
             }
         }
 
-        return schemaBuilder.build();
-    }
+        Schema result = schemaBuilder.build();
+        StructHelper.dumpSchema(result);
 
+        return result;
+    }
 
     private static DescriptorProtos.DescriptorProto findNestedMessage(DescriptorProtos.DescriptorProto descriptorProto, DescriptorProtos.FieldDescriptorProto field) {
         for (DescriptorProtos.DescriptorProto nestedType : descriptorProto.getNestedTypeList()) {
-            if (nestedType.getName().equals(field.getTypeName().substring(field.getTypeName().lastIndexOf(".") + 1))) {
+            String typeName = field.getTypeName().substring(field.getTypeName().lastIndexOf(".") + 1);
+            if (nestedType.getName().equals(typeName)) {
                 return nestedType;
             }
         }
         return null;
     }
-
 }

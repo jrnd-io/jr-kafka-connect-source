@@ -22,8 +22,11 @@ package io.jrnd.kafka.connect.connector.format;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 public class StructHelper {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StructHelper.class);
 
     public static Struct convertJsonToStruct(Schema schema, String jsonString) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -42,6 +47,51 @@ public class StructHelper {
         populateStruct(struct, schema, jsonNode);
 
         return struct;
+    }
+
+    public static void dumpSchema(Schema schema) {
+        if (schema == null) {
+            if (LOG.isDebugEnabled())
+                LOG.debug("Schema is null");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Schema Name: ").append(schema.name()).append("\n");
+        sb.append("Schema Type: ").append(schema.type()).append("\n");
+
+        if (schema.isOptional()) {
+            sb.append("Schema is Optional\n");
+        } else {
+            sb.append("Schema is Required\n");
+        }
+
+        switch (schema.type()) {
+            case STRUCT:
+                sb.append("Fields:\n");
+                for (Field field : schema.fields()) {
+                    sb.append("  Field Name: ").append(field.name()).append("\n");
+                    sb.append("  Field Schema: ").append(field.schema().name())
+                            .append(" (Type: ").append(field.schema().type()).append(")\n");
+                }
+                break;
+
+            case ARRAY:
+                sb.append("Array Type: ").append(schema.valueSchema().type()).append("\n");
+                break;
+
+            case MAP:
+                sb.append("Map Key Type: ").append(schema.keySchema().type()).append("\n");
+                sb.append("Map Value Type: ").append(schema.valueSchema().type()).append("\n");
+                break;
+
+            default:
+                sb.append("Type Details: ").append(schema.type()).append("\n");
+                break;
+        }
+
+        if (LOG.isDebugEnabled())
+            LOG.debug("Schema --> {}", sb);
     }
 
     private static void populateStruct(Struct struct, Schema schema, JsonNode jsonNode) {

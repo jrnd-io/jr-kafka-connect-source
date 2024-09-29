@@ -19,6 +19,7 @@
 
 package io.jrnd.kafka.connect.format.protobuf;
 
+import io.jrnd.kafka.connect.connector.format.StructHelper;
 import io.jrnd.kafka.connect.connector.format.protobuf.ProtobufHelper;
 import org.apache.kafka.connect.data.Schema;
 import org.junit.jupiter.api.Test;

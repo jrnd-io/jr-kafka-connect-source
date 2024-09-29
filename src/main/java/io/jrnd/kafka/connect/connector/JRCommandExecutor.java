@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class JRCommandExecutor {
@@ -51,7 +52,6 @@ public class JRCommandExecutor {
         List<String> templates = new ArrayList<>();
         
         ProcessBuilder processBuilder = new ProcessBuilder();
-
         StringBuilder commandBuilder = new StringBuilder();
         if(executablePath != null && !executablePath.isEmpty()) {
             commandBuilder.append(executablePath).append(File.separator);
@@ -67,7 +67,6 @@ public class JRCommandExecutor {
         
         try {
             Process process = processBuilder.start();
-            
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -76,12 +75,10 @@ public class JRCommandExecutor {
                     templates.add(tmpLine);
                 }
             }
-
             printError(process);
-
         } catch (Exception e) {
             if (LOG.isErrorEnabled())
-                LOG.error(JR_EXECUTABLE_NAME + " command failed:{}", e.getMessage());
+                LOG.error("templates list failed:{}", e.getMessage());
         }
         return templates; 
     }
@@ -95,17 +92,33 @@ public class JRCommandExecutor {
         ProcessBuilder processBuilder = new ProcessBuilder();
 
         StringBuilder commandBuilder = new StringBuilder();
-        if(executablePath != null && !executablePath.isEmpty()) {
+        if(executablePath != null && !executablePath.isEmpty())
             commandBuilder.append(executablePath).append(File.separator);
-        }
         commandBuilder.append(JR_EXECUTABLE_NAME);
 
-        if(keyField == null || keyField.isEmpty()) {
+        if (LOG.isDebugEnabled())
+            LOG.debug("Evaluate template wrapper - keyEmbedded {} and valueEmbedded {}", templateWrapper.isKeyEmbedded(), templateWrapper.isEmbedded());
+
+        // Case: key with embedded template
+        if(templateWrapper.isKeyEmbedded()) {
+            commandBuilder.append(" run ");
+            commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
+            commandBuilder.append(" --key ' ");
+            commandBuilder.append(templateWrapper.getKeyTemplate());
+            commandBuilder.append(" '");
+            commandBuilder.append(" --outputTemplate ");
+            commandBuilder.append(JR_OUTPUT_TEMPLATE_FORMAT);
+            commandBuilder.append(" -n ");
+            commandBuilder.append(objects);
+        }
+        // Case: no key field and no key embedded template
+        else if(!templateWrapper.isKeyEmbedded() && (keyField == null || keyField.isEmpty())) {
             commandBuilder.append(" run ");
             commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
             commandBuilder.append(" -n ");
             commandBuilder.append(objects);
         }
+        // Case: key field and no key embedded template
         else {
             commandBuilder.append(" run ");
             commandBuilder.append(templateWrapper.isEmbedded()? "--embedded '" + templateWrapper.getTemplate() + "'":templateWrapper.getTemplate());
@@ -118,7 +131,6 @@ public class JRCommandExecutor {
             commandBuilder.append(JR_OUTPUT_TEMPLATE_FORMAT);
             commandBuilder.append(" -n ");
             commandBuilder.append(objects);
-
         }
 
         if (LOG.isDebugEnabled())
@@ -132,19 +144,16 @@ public class JRCommandExecutor {
         StringBuilder output = null;
         try {
             Process process = processBuilder.start();
-            
             output = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
                 output.append(line).append("\n");
             }
-
             printError(process);
-
         } catch (Exception e) {
             if (LOG.isErrorEnabled())
-                LOG.error(JR_EXECUTABLE_NAME + " command failed:{}", e.getMessage());
+                LOG.error("run template failed:{}", e.getMessage());
         }
         assert output != null;
         return splitJsonObjects(output.toString().replaceAll("\\r?\\n", ""));
@@ -190,6 +199,7 @@ public class JRCommandExecutor {
                 currentJson.setLength(0);
             }
         }
+        jsonObjects.removeAll(Arrays.asList("", " ", null));
         return jsonObjects;
     }
 
@@ -206,7 +216,6 @@ public class JRCommandExecutor {
         }
 
         private CommandInterpeter() {
-
             if (System.getProperty("os.name").toLowerCase().contains("win")) {
                 this.command = "cmd.exe";
                 this.arguments = "/c";
