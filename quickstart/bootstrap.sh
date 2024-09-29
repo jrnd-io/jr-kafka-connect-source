@@ -15,6 +15,17 @@ sleep 60
 
 echo "Adding jr-source.quickstart job..."
 
-#curl -X POST -H Accept:application/json -H Content-Type:application/json \
- # http://localhost:8083/connectors/ \
-  #-d @config/jr-source.quickstart.json
+curl -X POST -H Accept:application/json -H Content-Type:application/json \
+  http://localhost:8083/connectors/ \
+  -d @config/jr-source.quickstart.json
+
+DIRECTORY="./config"
+URL="http://localhost:8083/connectors/"
+
+#for file in "$DIRECTORY"/*.json
+#do
+  #if [ -e "$file" ]; then
+    #curl -X POST -H Accept:application/json -H Content-Type:application/json "$URL" \
+         #-d @"$file"
+  #fi
+#done

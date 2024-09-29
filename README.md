@@ -63,29 +63,43 @@ tear-down.sh
 
 JR Source Connector can be configured with:
 
-Parameter | Description                                                                                                                                                                                                                                                         | Default
--|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-
-`template` | A valid JR existing template name. Skipped when __embedded_template_ is set. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates                                                                                                | net_device
-`embedded_template` | Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes.                                                                                                        | 
-`topic` | destination topic on Kafka                                                                                                                                                                                                                                          |
-`frequency` | Repeat the creation of a random object every 'frequency' milliseconds.                                                                                                                                                                                              | 5000                                                                         
+Parameter | Description                                                                                                                                                                                                                                     | Default
+-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-
+`template` | A valid JR existing template name. Skipped when __embedded_template_ is set. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates                                                                            | net_device
+`embedded_template` | Location of a file containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes.                                                                                    | 
+`topic` | destination topic on Kafka                                                                                                                                                                                                                      |
+`frequency` | Repeat the creation of a random object every 'frequency' milliseconds.                                                                                                                                                                          | 5000                                                                         
 `duration` | Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for 'duration'. If not set creation will run forever. | -1                                                                                              
-`objects` | Number of objects to create at every run.                                                                                                                                                                                                                           | 1                                                                                                                                   
-`key_field_name` | Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Skipped when _key_embedded_template_ is set. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key   |
-`key_value_interval_max` | Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Skipped when _key_embedded_template_ is set.                                                                                                                                   | 100
-`key_embedded_template` | Location of a file containing a valid custom JR template for keys. This property will take precedence over _key_field_name_ and _key_value_interval_max_. File must exist on Kafka Connect Worker nodes.                                                            |
-`jr_executable_path` | Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.                                                                                                                                                             |
-`value.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                                     |org.apache.kafka.connect.storage.StringConverter
-`value.converter.schema.registry.url` | Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Confluent Schema Registry._                                           |
-`key.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                                     |org.apache.kafka.connect.storage.StringConverter
-`key.converter.schema.registry.url` | Only if _key.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Confluent Schema Registry._                                             |
+`objects` | Number of objects to create at every run.                                                                                                                                                                                                       | 1                                                                                                                                   
+`key_field_name` | Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Skipped when _key_embedded_template_ is set. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key |
+`key_value_interval_max` | Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Skipped when _key_embedded_template_ is set.                                                                                                               | 100
+`key_embedded_template` | Location of a file containing a valid custom JR template for keys. This property will take precedence over _key_field_name_ and _key_value_interval_max_. File must exist on Kafka Connect Worker nodes.                                        |
+`jr_executable_path` | Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.                                                                                                                                         |
+`value.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                 |org.apache.kafka.connect.storage.StringConverter
+`value.converter.schema.registry.url` | Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Schema Registry._                                 |
+`key.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                 |org.apache.kafka.connect.storage.StringConverter
+`key.converter.schema.registry.url` | Only if _key.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Schema Registry._                                   |
 
-  
+
+## Format
+
+Connector supports various converters for keys, using parameter _key.converter_, and values, using parameter _value.converter_, and can be used together with a Schema Registry.
+
+Converter | Schema Registry support                                                                                                                                             
+-|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+`org.apache.kafka.connect.storage.StringConverter` | No
+`io.confluent.connect.avro.AvroConverter` | Yes
+`io.confluent.connect.json.JsonSchemaConverter` | Yes
+`io.confluent.connect.protobuf.ProtobufConverter` | Yes                                                                                             
+
+
 ## Examples
 
 ### Usage of keys
 
-Connector can be configured with keys. In this example a JR connector job for template _user_ will be instantiated and produce 5 new random messages to _user_ topic every 5 seconds, using a message key field named 'guid' set with a random integer value between 0 and 150.
+Connector can be configured to create messages having keys. 
+
+In this example a JR connector job for template _user_ will be instantiated and produce 5 new random messages to _user_ topic every 5 seconds, using a message key field named 'guid' set with a random integer value between 0 and 150.
 
 ```
 {
@@ -117,7 +131,9 @@ kafka-console-consumer --bootstrap-server localhost:9092 --topic user --from-beg
 
 ### Usage of duration
 
-Connector can be configured to run for a duration of time. In this example a JR connector job for template _marketing_campaign_finance_ will be instantiated and produce 5 new random messages to _users_ topic every 10 seconds for a total duration of 30 seconds.
+Connector can be configured to run for a duration of time. 
+
+In this example a JR connector job for template _marketing_campaign_finance_ will be instantiated and produce 5 new random messages to _users_ topic every 10 seconds for a total duration of 30 seconds.
 
 ```
 {
@@ -160,7 +176,9 @@ Processed a total of 15 messages
 
 ### Schema Registry: Avro
 
-Connector can be configured to produce objects serialized using Avro. In this example a JR connector job for template _store_ will be instantiated and produce 5 new random messages to _store_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
+Connector can be configured to produce objects serialized using Avro. 
+
+In this example a JR connector job for template _store_ will be instantiated and produce 5 new random messages to _store_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
 
 ```
 {
@@ -203,7 +221,9 @@ curl -v http://localhost:8081/subjects/store-value/versions/1/schema
 
 ### Schema Registry: Json schema
 
-Connector can be configured to produce objects serialized using JsonSchema. In this example a JR connector job for template _payment_credit_card_ will be instantiated and produce 5 new random messages to _payment_credit_card_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Json_ schema.
+Connector can be configured to produce objects serialized using JsonSchema. 
+
+In this example a JR connector job for template _payment_credit_card_ will be instantiated and produce 5 new random messages to _payment_credit_card_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Json_ schema.
 
 ```
 {
@@ -246,7 +266,9 @@ curl -v http://localhost:8081/subjects/payment_credit_card-value/versions/1/sche
 
 ### Schema Registry: Protobuf
 
-Connector can be configured to produce objects serialized using Protobuf. In this example a JR connector job for template _shopping_rating_ will be instantiated and produce 5 new random messages to _shopping_rating_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Protobuf_ schema.
+Connector can be configured to produce objects serialized using Protobuf. 
+
+In this example a JR connector job for template _shopping_rating_ will be instantiated and produce 5 new random messages to _shopping_rating_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Protobuf_ schema.
 
 ```
 {
@@ -299,7 +321,9 @@ message shopping_rating {
 
 ### Custom templates
 
-Connector can be configured with a custom template for value. In this example a JR connector job with a custom template will be instantiated and produce 5 new random messages to _customer_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
+Connector can be configured using a custom template for keys and values. 
+
+In this example a JR connector job with a custom template for values will be instantiated and produce 5 new random messages to _customer_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
 
 Template definition is loaded from file _/tmp/customer-template.json_ existing on Kafka Connect Worker nodes.
 
@@ -333,7 +357,7 @@ kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer -
 
 #### Custom templates for keys
 
-Connector can be configured to produce keys and objects serialized using Avro. In this example a JR connector job using a custom template will be instantiated and produce 5 new random messages to _customer_full_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema. Keys are created using a custom template, using the _Confluent Schema Registry_ to register the _Avro_ schema.
+In this example a JR connector job using a custom template for values will be instantiated and produce 5 new random messages to _customer_full_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema. Message keys are also created using a custom template, using the _Confluent Schema Registry_ to register the _Avro_ schema.
 
 Template definition is loaded from file _/tmp/customer-template.json_ existing on Kafka Connect Worker nodes.
 
