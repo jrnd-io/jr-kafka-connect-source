@@ -2,7 +2,7 @@
 
 services:
   broker:
-    image: confluentinc/cp-kafka:7.7.0
+    image: confluentinc/cp-kafka:7.7.1
     hostname: broker
     container_name: broker
     ports:
@@ -25,7 +25,7 @@ services:
       CLUSTER_ID: 'QTnB2tAgTWa1ec5wYon2jg'
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:7.7.0
+    image: confluentinc/cp-schema-registry:7.7.1
     hostname: schema-registry
     container_name: schema-registry
     depends_on:
@@ -66,7 +66,7 @@ services:
       CONNECT_LOG4J_LOGGERS: org.reflections=ERROR
 
   control-center:
-    image: confluentinc/cp-enterprise-control-center:7.7.0
+    image: confluentinc/cp-enterprise-control-center:7.7.1
     hostname: control-center
     container_name: control-center
     depends_on:

@@ -303,6 +303,7 @@ public class JRSourceTask extends SourceTask {
             Schema valueKafkaConnectSchema,
             Map<String, Object> sourcePartition,
             Map<String, Long> sourceOffset) throws IOException {
+
         Struct structValue = StructHelper.convertJsonToStruct(valueKafkaConnectSchema, recordValue);
 
         if (LOG.isDebugEnabled()) {
