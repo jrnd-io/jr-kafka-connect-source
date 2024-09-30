@@ -179,7 +179,7 @@ public class JRSourceTask extends SourceTask {
         return Collections.emptyList();
     }
 
-    private Template getTemplateWrapper() {
+    public Template getTemplateWrapper() {
         Template templateWrapper = new Template();
         templateWrapper.setTemplate(template);
         if (embeddedTemplate != null && !embeddedTemplate.isEmpty()) {

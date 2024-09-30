@@ -37,7 +37,7 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:9092'
 
   connect:
-    image: jrndio/kafka-connect-demo-image:0.3.0
+    image: jrndio/kafka-connect-demo-image:0.4.0
     hostname: connect
     container_name: connect
     depends_on:
@@ -84,3 +84,12 @@ services:
       CONTROL_CENTER_STREAMS_NUM_STREAM_THREADS: 1
       CONTROL_CENTER_CONSUMER_FETCH_MAX_BYTES: 52428800
       CONTROL_CENTER_CONSUMER_MAX_POLL_RECORDS: 500
+
+  web:
+    image: nginx:alpine
+    hostname: web
+    container_name: web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./config/html:/usr/share/nginx/html:ro

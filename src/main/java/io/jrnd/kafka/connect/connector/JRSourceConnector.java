@@ -29,7 +29,11 @@ import org.apache.kafka.connect.storage.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +41,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JRSourceConnector extends SourceConnector {
 
@@ -191,17 +197,50 @@ public class JRSourceConnector extends SourceConnector {
         return Files.readString(path);
     }
 
+    private String readURLToString(String urlString) throws Exception {
+        StringBuilder content = new StringBuilder();
+
+        URL url = new URL(urlString);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            content.append(inputLine).append("\n");
+        }
+        in.close();
+
+        return content.toString();
+    }
+
     private String readTemplate(String templateFileLocation) {
         String result = null;
         if (templateFileLocation != null && !templateFileLocation.isEmpty()) {
             try {
-                result = readFileToString(templateFileLocation);
+                // Case read from a URL
+                if(isValidURL(templateFileLocation)) {
+                    result = readURLToString(templateFileLocation);
+                }
+                // Case read from a file
+                else {
+                    result = readFileToString(templateFileLocation);
+                }
                 result = result.replaceAll("[\\n\\r]", "");
-            } catch (IOException e) {
-                throw new RuntimeException("can't read template from file.");
+            } catch (Exception e) {
+                if (LOG.isErrorEnabled())
+                    LOG.error("can't read template from external location: {}", e.getMessage());
+                throw new RuntimeException("can't read template from external location.");
             }
         }
         return result;
+    }
+
+    private boolean isValidURL(String url) {
+        String regex = "^(http|https)://[^\\s/$.?#].[^\\s]*$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(url);
+        return matcher.matches();
     }
 
     public Integer getObjects() {
