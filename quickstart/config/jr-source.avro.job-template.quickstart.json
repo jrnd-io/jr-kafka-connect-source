@@ -1,11 +1,12 @@
 {
-    "name" : "jr-avro-custom-quickstart",
+    "name" : "jr-avro-job-template-quickstart",
     "config": {
         "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
-        "embedded_template" : "/tmp/customer-template.json",
-        "topic": "customer",
+        "embedded_template" : "http://web/job-template.json",
+        "topic": "jobs",
         "frequency" : 5000,
         "objects": 5,
+        "duration": 150000,
         "value.converter": "io.confluent.connect.avro.AvroConverter",
         "value.converter.schema.registry.url": "http://schema-registry:8081",
         "tasks.max": 1

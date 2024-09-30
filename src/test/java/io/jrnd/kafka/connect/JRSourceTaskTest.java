@@ -47,13 +47,16 @@ import static org.mockito.Mockito.*;
 public class JRSourceTaskTest {
 
     @Mock
-    private JRCommandExecutor executor;
+    private JRCommandExecutor mockExecutor;
 
     @Mock
     private SourceTaskContext context;
 
     @Mock
     private OffsetStorageReader offsetStorageReader;
+
+    @Mock
+    private SourceTaskContext mockContext;
 
     @InjectMocks
     private JRSourceTask jrSourceTask;
@@ -71,6 +74,11 @@ public class JRSourceTaskTest {
         config.put(JRSourceConnector.KEY_VALUE_INTERVAL_MAX, "200");
 
         when(context.offsetStorageReader()).thenReturn(offsetStorageReader);
+
+        MockitoAnnotations.openMocks(this);
+        jrSourceTask = new JRSourceTask();
+        when(mockContext.offsetStorageReader()).thenReturn(offsetStorageReader);
+        jrSourceTask.initialize(mockContext);
     }
 
     @Test
@@ -102,25 +110,66 @@ public class JRSourceTaskTest {
     }
 
     //@Test
-    public void testPoll() {
+    void testPollWithoutKeyField() throws Exception {
 
-        jrSourceTask.start(config);
+        jrSourceTask = spy(jrSourceTask);
+        Map<String, String> props = Map.of(
+                JRSourceConnector.JR_EXISTING_TEMPLATE, "test-template",
+                JRSourceConnector.TOPIC_CONFIG, "test-topic",
+                JRSourceConnector.POLL_CONFIG, "1000",
+                JRSourceConnector.OBJECTS_CONFIG, "10",
+                JRSourceConnector.JR_EXECUTABLE_PATH, "/usr/local/bin"
+        );
 
-        Template template = new Template();
-        template.setTemplate("net_device");
+        jrSourceTask.start(props);
 
-        when(executor.runTemplate(template, 10, null, 100)).thenReturn(Arrays.asList("record1", "record2"));
-        List<SourceRecord> records = jrSourceTask.poll();
+        Template mockTemplate = new Template();
+        mockTemplate.setTemplate("test-template");
+        when(jrSourceTask.getTemplateWrapper()).thenReturn(mockTemplate);
 
-        assertEquals(2, records.size());
+        try (MockedStatic<JRCommandExecutor> mockedStatic = mockStatic(JRCommandExecutor.class)) {
+            mockedStatic.when(() -> JRCommandExecutor.getInstance("/tmp"))
+                    .thenReturn(mockExecutor);
 
-        SourceRecord record1 = records.get(0);
-        assertEquals("test-topic", record1.topic());
-        assertEquals("record1", record1.value());
+            when(mockExecutor.runTemplate(any(Template.class), anyInt(), anyString(), anyInt()))
+                    .thenReturn(List.of("{\"key\": \"value\"}"));
 
-        SourceRecord record2 = records.get(1);
-        assertEquals("test-topic", record2.topic());
-        assertEquals("record2", record2.value());
+            //FIXME need to move JRCommandExecutor.getInstance static method at class level
+            List<SourceRecord> records = jrSourceTask.poll();
+
+            assertNotNull(records);
+            assertEquals(1, records.size());
+            verify(mockExecutor, times(1)).runTemplate(any(Template.class), anyInt(), anyString(), anyInt());
+
+
+        }
+    }
+
+    @Test
+    void testCreateSourceRecord() {
+        jrSourceTask = spy(jrSourceTask);
+        Map<String, String> props = Map.of(
+                JRSourceConnector.JR_EXISTING_TEMPLATE, "test-template",
+                JRSourceConnector.TOPIC_CONFIG, "test-topic",
+                JRSourceConnector.POLL_CONFIG, "1000",
+                JRSourceConnector.OBJECTS_CONFIG, "10",
+                JRSourceConnector.VALUE_CONVERTER, "org.apache.kafka.connect.storage.StringConverter",
+                JRSourceConnector.JR_EXECUTABLE_PATH, "/usr/local/bin"
+        );
+
+        jrSourceTask.start(props);
+
+
+        String recordKey = "{\"id\":\"1\"}";
+        String recordValue = "{\"value\":\"test-value\"}";
+
+        SourceRecord sourceRecord = jrSourceTask.createSourceRecord(recordKey, recordValue);
+
+        assertNotNull(sourceRecord);
+        assertEquals("test-template", sourceRecord.sourcePartition().get("template"));
+        assertEquals("test-topic", sourceRecord.topic());
+        assertEquals(recordKey, sourceRecord.key());
+        assertEquals(recordValue, sourceRecord.value());
     }
 
     @Test

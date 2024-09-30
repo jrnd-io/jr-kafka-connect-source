@@ -1,13 +1,12 @@
-
 {
-  "customer_id": "{{uuid}}",
-  "first_name": "{{name}}",
-  "last_name": "{{surname}}",
-  "email": "{{email}}",
-  "phone_number": "{{phone}}",
-  "street_address": "{{city}}, {{street}} {{building 2}}, {{zip}}",
-  "state": "{{state}}",
-  "zip_code": "{{zip}}",
-  "country": "United States",
-  "country_code": "US"
+  "job_title": "{{randoms "Software Engineer|Data Scientist|DevOps Engineer|Product Manager|UI/UX Designer"}}",
+  "job_department": "{{randoms "Engineering|Data Science|Operations|Product|Design"}}",
+  "job_location": "{{randoms "New York|San Francisco|Remote|London|Berlin"}}",
+  "job_description": "{{randoms "Join our innovative team to build cutting-edge software solutions|Lead projects in developing next-gen data products|Help design and implement cloud infrastructure for our services|Collaborate with cross-functional teams to enhance our product line|Design user-centered interfaces for our web and mobile applications"}}",
+  "required_skills": [
+    "{{randoms "Python|Java|JavaScript|AWS|Docker"}}",
+    "{{randoms "Agile methodologies|SQL|React|Node.js|Machine Learning"}}",
+    "{{randoms "Kubernetes|Figma|Project Management|Data Visualization|Microservices Architecture"}}"],
+  "salary": "{{randoms "$80,000 - $100,000|$100,000 - $120,000|$120,000 - $150,000"}}",
+  "experience_level": "{{randoms "Entry Level|Mid Level|Senior Level"}}"
 }
