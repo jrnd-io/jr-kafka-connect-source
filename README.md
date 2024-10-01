@@ -385,7 +385,7 @@ kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer -
 {"customer_id":"a57911e5-dc9e-4da4-b280-1c0b0143538e","first_name":"Charles","last_name":"Thompson","email":"charles.thompson@gmail.com","phone_number":"726 39040449","street_address":"Richmond, Hillcrest Road 6, 43215","state":"Indiana","zip_code":"43215","country":"United States","country_code":"US"}
 ```
 
-In this second example a JR connector job with a custom template for values will be instantiated and produce 5 new random messages to _customer_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
+In this second example a JR connector job with a custom template for values will be instantiated and produce 5 new random messages to _jobs_ topic every 5 seconds, using the _Confluent Schema Registry_ to register the _Avro_ schema.
 
 Template definition is loaded from URL _http://web/job-template.json_ .
 
