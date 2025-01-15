@@ -553,3 +553,7 @@ kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer_f
 ### Confluent Hub
 
 JR Source Connector is available on Confluent Hub: https://www.confluent.io/hub/jrndio/jr-source-connector
+
+## Limitations
+
+- [JR Emitters](https://jrnd.io/docs/emitters/) are not currently supported
