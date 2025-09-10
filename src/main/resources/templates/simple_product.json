@@ -1,0 +1,7 @@
+{
+  "product_id": "{{integer 1000 9999}}",
+  "name": "{{randoms \"Laptop|Phone|Tablet|Monitor|Keyboard\"}}",
+  "price": "{{float 10.99 999.99}}",
+  "category": "{{randoms \"Electronics|Computers|Accessories\"}}",
+  "in_stock": "{{bool}}"
+}

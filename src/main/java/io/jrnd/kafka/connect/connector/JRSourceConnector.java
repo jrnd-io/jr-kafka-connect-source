@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -214,12 +215,38 @@ public class JRSourceConnector extends SourceConnector {
         return content.toString();
     }
 
+    private String readResourceToString(String resourcePath) throws IOException {
+        // Remove leading slash if present for consistency
+        if (resourcePath.startsWith("/")) {
+            resourcePath = resourcePath.substring(1);
+        }
+        
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            
+            if (inputStream == null) {
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+            
+            StringBuilder content = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+            return content.toString();
+        }
+    }
     private String readTemplate(String templateFileLocation) {
         String result = null;
         if (templateFileLocation != null && !templateFileLocation.isEmpty()) {
             try {
+                // Case read from a JAR resource
+                if (templateFileLocation.startsWith("classpath:")) {
+                    String resourcePath = templateFileLocation.substring("classpath:".length());
+                    result = readResourceToString(resourcePath);
+                }
                 // Case read from a URL
-                if(isValidURL(templateFileLocation)) {
+                else if(isValidURL(templateFileLocation)) {
                     result = readURLToString(templateFileLocation);
                 }
                 // Case read from a file

@@ -174,4 +174,35 @@ public class JRSourceConnectorTest {
         assertEquals(Integer.valueOf(200), jrSourceConnector.getKeyValueIntervalMax());
         assertNull(jrSourceConnector.getJrExecutablePath());
     }
+
+    @Test
+    public void testStartWithClasspathTemplate() {
+        when(mockCommandExecutor.templates()).thenReturn(Arrays.asList("net_device", "gaming_game"));
+
+        Map<String, String> config = new HashMap<>();
+        config.put(JRSourceConnector.EMBEDDED_TEMPLATE, "classpath:templates/sample_user.json");
+        config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
+        config.put(JRSourceConnector.POLL_CONFIG, "1000");
+        config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
+
+        jrSourceConnector.start(config);
+
+        assertEquals("test-topic", jrSourceConnector.getTopic());
+        assertEquals(Long.valueOf(1000), jrSourceConnector.getPollMs());
+        assertEquals(Integer.valueOf(10), jrSourceConnector.getObjects());
+    }
+
+    @Test
+    public void testStartWithInvalidClasspathTemplate() {
+        when(mockCommandExecutor.templates()).thenReturn(Arrays.asList("net_device", "gaming_game"));
+
+        Map<String, String> config = new HashMap<>();
+        config.put(JRSourceConnector.EMBEDDED_TEMPLATE, "classpath:templates/nonexistent.json");
+        config.put(JRSourceConnector.TOPIC_CONFIG, "test-topic");
+        config.put(JRSourceConnector.POLL_CONFIG, "1000");
+        config.put(JRSourceConnector.OBJECTS_CONFIG, "10");
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> jrSourceConnector.start(config));
+        assertEquals("can't read template from external location.", exception.getMessage());
+    }
 }

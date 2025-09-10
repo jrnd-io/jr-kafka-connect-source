@@ -1,0 +1,9 @@
+{
+  "user_id": "{{uuid}}",
+  "username": "{{username}}",
+  "email": "{{email}}",
+  "first_name": "{{name}}",
+  "last_name": "{{surname}}",
+  "age": "{{integer 18 65}}",
+  "created_at": "{{date}}"
+}
