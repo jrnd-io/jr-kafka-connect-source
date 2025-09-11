@@ -24,7 +24,7 @@
     "kafka_connect_api" : true,
     "delivery_guarantee": ["at_least_once"]
   },
-  "documentation_url" : "https://github.com/jrnd-io/jr-kafka-connect-source/README.md",
+  "documentation_url" : "https://github.com/jrnd-io/jr-kafka-connect-source/blob/main/README.md",
   "source_url" : "https://github.com/jrnd-io/jr-kafka-connect-source",
   "docker_image" : { },
   "license" : [ {
