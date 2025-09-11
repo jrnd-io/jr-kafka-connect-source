@@ -66,14 +66,14 @@ JR Source Connector can be configured with:
 Parameter | Description                                                                                                                                                                                                                                                         | Default
 -|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-
 `template` | A valid JR existing template name. Skipped when __embedded_template_ is set. For a list of available templates see: https://jrnd.io/docs/#listing-existing-templates                                                                                                | net_device
-`embedded_template` | Location of a file or URL, containing a valid custom JR template. This property will take precedence over _template_. File must exist on Kafka Connect Worker nodes.                                                                                                | 
+`embedded_template` | Location of a file, URL, or JAR resource containing a valid custom JR template. This property will take precedence over _template_. For files and URLs, the resource must exist on Kafka Connect Worker nodes. For JAR resources, use the `classpath:` prefix (e.g., `classpath:templates/my_template.json`). | 
 `topic` | destination topic on Kafka                                                                                                                                                                                                                                          |
 `frequency` | Repeat the creation of a random object every 'frequency' milliseconds.                                                                                                                                                                                              | 5000                                                                         
 `duration` | Set a time bound to the entire object creation. The duration is calculated starting from the first run and is expressed in milliseconds. At least one run will always been scheduled, regardless of the value for 'duration'. If not set creation will run forever. | -1                                                                                              
 `objects` | Number of objects to create at every run.                                                                                                                                                                                                                           | 1                                                                                                                                   
 `key_field_name` | Name for key field, for example 'ID'. This is an _OPTIONAL_ config, if not set, objects will be created without a key. Skipped when _key_embedded_template_ is set. Value for key will be calculated using JR function _key_, https://jrnd.io/docs/functions/#key   |
 `key_value_interval_max` | Maximum interval value for key value, for example 150 (0 to key_value_interval_max). Skipped when _key_embedded_template_ is set.                                                                                                                                   | 100
-`key_embedded_template` | Location of a file or URL, containing a valid custom JR template for keys. This property will take precedence over _key_field_name_ and _key_value_interval_max_. File must exist on Kafka Connect Worker nodes.                                                    |
+`key_embedded_template` | Location of a file, URL, or JAR resource containing a valid custom JR template for keys. This property will take precedence over _key_field_name_ and _key_value_interval_max_. For files and URLs, the resource must exist on Kafka Connect Worker nodes. For JAR resources, use the `classpath:` prefix. |
 `jr_executable_path` | Location for JR executable on workers. If not set, jr executable will be searched using $PATH variable.                                                                                                                                                             |
 `value.converter` | one between _org.apache.kafka.connect.storage.StringConverter_, _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_                                                     |org.apache.kafka.connect.storage.StringConverter
 `value.converter.schema.registry.url` | Only if _value.converter_ is set to _io.confluent.connect.avro.AvroConverter_, _io.confluent.connect.json.JsonSchemaConverter_ or _io.confluent.connect.protobuf.ProtobufConverter_. URL for _Schema Registry._                                                     |
@@ -535,6 +535,59 @@ kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic customer_f
 {"customer_id":"ddea0697-1218-40f0-81e8-3d56e324f5c6","last_name":"Baker"}	{"customer_id":"ddea0697-1218-40f0-81e8-3d56e324f5c6","first_name":"Wayne","last_name":"Baker","email":"wayne.brooks@aol.com","phone_number":"571 29789830","street_address":"Richmond, River Street 04, 43215","state":"Iowa","zip_code":"43215","country":"United States","country_code":"US"}
 {"customer_id":"0a0ea230-035e-441f-b969-9c6ad5d6f91b","last_name":"Campbell"}	{"customer_id":"0a0ea230-035e-441f-b969-9c6ad5d6f91b","first_name":"Donald","last_name":"Campbell","email":"donald.carter@aol.com","phone_number":"804 33076187","street_address":"Dallas, Orange Street 43, 30303","state":"Wyoming","zip_code":"30303","country":"United States","country_code":"US"}
 ```
+
+#### Templates from JAR resources
+
+Connector can be configured using custom templates that are packaged inside the JAR file itself. This approach is useful for shipping commonly used templates with the connector, eliminating external file dependencies.
+
+In this example, a JR connector job will use a template bundled as a resource within the connector JAR file:
+
+Template definition packaged as a resource at `templates/sample_user.json` inside the JAR:
+
+```
+{
+  "user_id": "{{uuid}}",
+  "username": "{{username}}",
+  "email": "{{email}}",
+  "first_name": "{{name}}",
+  "last_name": "{{surname}}",
+  "age": "{{integer 18 65}}",
+  "created_at": "{{date}}"
+}
+```
+
+Connector job:
+
+```
+{
+    "name" : "jr-classpath-template-quickstart",
+    "config": {
+        "connector.class" : "io.jrnd.kafka.connect.connector.JRSourceConnector",
+        "embedded_template" : "classpath:templates/sample_user.json",
+        "topic": "users",
+        "frequency" : 5000,
+        "objects": 5,
+        "value.converter": "io.confluent.connect.avro.AvroConverter",
+        "value.converter.schema.registry.url": "http://schema-registry:8081",
+        "tasks.max": 1
+    }
+}
+```
+
+Consume from _users_ topic:
+
+```
+kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic users --from-beginning --property schema.registry.url=http://localhost:8081
+
+{"user_id":"f4a7c8d1-2b3e-4f5a-9c8d-1e2f3a4b5c6d","username":"johndoe","email":"johndoe@example.com","first_name":"John","last_name":"Doe","age":32,"created_at":"2024-09-10T15:30:45Z"}
+{"user_id":"a1b2c3d4-5e6f-7890-abcd-ef1234567890","username":"janesmth","email":"jane.smith@example.com","first_name":"Jane","last_name":"Smith","age":28,"created_at":"2024-09-10T15:30:46Z"}
+```
+
+Benefits of classpath templates:
+- **Self-contained**: Templates are bundled with the connector, no external file dependencies
+- **Versioned**: Templates are versioned together with the connector code
+- **Portable**: Easy deployment across different environments
+- **Reliable**: No risk of missing external template files
 
 ## Installation
 
